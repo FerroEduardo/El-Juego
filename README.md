@@ -7,7 +7,6 @@ Para Compilar, baixar tudo e deixar numa pasta só e digitar isso no console:
 
 ou
 
-
 "gcc -o game game.c -lSDL2 -lSDL2_image -lm -Wall"
 
 Para executar, digite no terminal:
