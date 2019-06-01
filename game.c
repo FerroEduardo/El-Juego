@@ -2,6 +2,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 //gcc -o game game.c -lSDL2 -lSDL2_image -lm -Wall `sdl2-config --libs`
+
 //SDL_Image, SDL_Mixer, SDL_Ttf, SDL_Gfx
 //http://www.lazyfoo.net/tutorials/SDL/01_hello_SDL/index2.php
 //https://www.youtube.com/watch?v=yFLa3ln16w0
@@ -9,6 +10,9 @@
 //tamanho da janela
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
+
+//speed in pixels/second
+#define SCROLL_SPEED 300
 
 //variaveis globais
 SDL_Window *window = NULL;
@@ -37,7 +41,7 @@ int main(int argc, char* args[]){
         return 1;
     }
     //carrega imagem na memoria do pc,provavelmente na RAM
-    SDL_Surface *screenSurface = IMG_Load("recursos/teste.bmp");
+    SDL_Surface *screenSurface = IMG_Load("recursos/mario.png");
     if(screenSurface==NULL){
         printf("Deu merda ao criar SURFACE! SDL_Error: %s\n", SDL_GetError());
         SDL_DestroyRenderer(render);
@@ -56,18 +60,56 @@ int main(int argc, char* args[]){
         SDL_Quit();
         return 1;
     }
+    SDL_RenderClear(render);
+    //sdl_rect, struct do tamanho do sprite e posicao
+    SDL_Rect mario;
+    /*
+    mario.x = 0;
+    mario.y = 0;
+    mario.w = 32;
+    mario.h = 32;
+    */
+
+    //pega as dim da textura
+    SDL_QueryTexture(texture, NULL, NULL, &mario.w, &mario.h);
+
+    //posicao do sprite no meio inferior da janela
+    mario.x = (SCREEN_WIDTH - mario.w) / 2;
+
+    //require float resolution for y position
+    float y_pos = SCREEN_HEIGHT;
+
+    //animation loop
+    while(mario.y>=-mario.h){
+        //limpar janela a cada frame
+        SDL_RenderClear(render);
+
+        //set the y pos in the struct
+        mario.y = (int) y_pos;
+
+        //draw the image to the window
+        SDL_RenderCopy(render,texture, NULL, &mario);
+        SDL_RenderPresent(render);
+
+        //update sprite position
+        y_pos -= (float) SCROLL_SPEED / 60;
+
+        //wait 1/60th of a second
+        SDL_Delay(1000/60);
+    }
+    
 
     //limpa janela, remove o "lixo" e tranforma o fundo em preto
-    SDL_RenderClear(render);
+    //SDL_RenderClear(render);
 
     //traz imagem para a janela, "copia a textura e renderiza"
     //ler sobre SDL_Rect
     //double buffering
-    SDL_RenderCopy(render, texture, NULL, NULL);
-    SDL_RenderPresent(render);
+    //SDL_RenderCopy(render, texture, NULL, NULL);
+    //SDL_RenderPresent(render);
 
     //em 5000ms=5s
-    SDL_Delay(5000);
+    //SDL_Delay(5000);
 
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(render);
