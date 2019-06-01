@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-//gcc -o game game.c -lSDL2 -lSDL2_image -lm -Wall `sdl2-config --libs`
+#include <SDL2/SDL_mixer.h>
+//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs`
 //compila e abre se nao tiver erro
-//gcc -o game game.c -lSDL2 -lSDL2_image -lm -Wall && ./game
+//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs` && ./game
 //SDL_Image, SDL_Mixer, SDL_Ttf, SDL_Gfx
 //http://www.lazyfoo.net/tutorials/SDL/01_hello_SDL/index2.php
 //https://www.youtube.com/watch?v=yFLa3ln16w0
@@ -80,30 +82,69 @@ int main(int argc, char* args[]){
     mario.h /= 4;
 
     //posicao do sprite no meio inferior da janela
-    //mario.x = (SCREEN_WIDTH - mario.w) / 20;
+    mario.x = (SCREEN_WIDTH - mario.w) / 20;
 
     //require float resolution for y position
     float y_pos = (SCREEN_HEIGHT- mario.h);
     float x_pos = (SCREEN_WIDTH - mario.w);
 
-    //sprite initial velocity
-    float x_vel = SPEED;
-    float y_vel = SPEED;
+    
 
     //set to 1 when window close button is pressed
     int close_requested = 0;
+    //inicia "driver" de audio
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024);
+    if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024)==-1) {
+        printf("erro no Mix_OpenAudio: %s\n", Mix_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+    //salva musica para carregar/tocar depois
+    Mix_Chunk *nobreu = Mix_LoadWAV("recursos/nobreu.wav");
+    if(nobreu==NULL){
+        printf("erro NOBREU: %s\n", Mix_GetError());
+    }
+    //volume da faixa, "-1" muda o volume de todos os canais
+    Mix_Volume(-1,MIX_MAX_VOLUME/1);
+    //"-1" toca faixa no prox canal disponivel
+    Mix_PlayChannel(-1,nobreu,-1);
 
     //animation loop
     while (close_requested == 0){
         //process events
         SDL_Event fecharJanela;
         //fechar janela com X
+        
         while(SDL_PollEvent(&fecharJanela)){
             //SDK_QUIT é o evento quando pressiona X
             if(fecharJanela.type == SDL_QUIT){
                 close_requested = 1;
             }
+            
+            while(mario.y>=-mario.h){
+                
+                //limpar janela a cada frame
+                SDL_RenderClear(render);
+
+                //set the y pos in the struct
+                mario.y = (int) y_pos;
+
+                //draw the image to the window
+                SDL_RenderCopy(render,texture, NULL, &mario);
+                SDL_RenderPresent(render);
+
+                //update sprite position
+                y_pos -= (float) SCROLL_SPEED / 60;
+
+                //wait 1/60th of a second
+                SDL_Delay(1000/60);
+                
+            }
         }
+        
+        
         
     }
     
@@ -138,7 +179,7 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou o SDL\n");
-        window = SDL_CreateWindow("v0.0.02", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+        window = SDL_CreateWindow("v0.0.03", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
         if(window == NULL){
             printf("Deu merda na janela! SDL_Error: %s\n", SDL_GetError());
             SDL_Quit();
