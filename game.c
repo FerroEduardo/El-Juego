@@ -2,7 +2,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 //gcc -o game game.c -lSDL2 -lSDL2_image -lm -Wall `sdl2-config --libs`
-
+//compila e abre se nao tiver erro
+//gcc -o game game.c -lSDL2 -lSDL2_image -lm -Wall && ./game
 //SDL_Image, SDL_Mixer, SDL_Ttf, SDL_Gfx
 //http://www.lazyfoo.net/tutorials/SDL/01_hello_SDL/index2.php
 //https://www.youtube.com/watch?v=yFLa3ln16w0
@@ -13,6 +14,7 @@ const int SCREEN_HEIGHT = 480;
 
 //speed in pixels/second
 #define SCROLL_SPEED 300
+#define SPEED 300
 
 //variaveis globais
 SDL_Window *window = NULL;
@@ -60,6 +62,7 @@ int main(int argc, char* args[]){
         SDL_Quit();
         return 1;
     }
+    
     SDL_RenderClear(render);
     //sdl_rect, struct do tamanho do sprite e posicao
     SDL_Rect mario;
@@ -72,31 +75,38 @@ int main(int argc, char* args[]){
 
     //pega as dim da textura
     SDL_QueryTexture(texture, NULL, NULL, &mario.w, &mario.h);
+    //divide as dimensoes do mario por 4
+    mario.w /= 4;
+    mario.h /= 4;
 
     //posicao do sprite no meio inferior da janela
-    mario.x = (SCREEN_WIDTH - mario.w) / 2;
+    //mario.x = (SCREEN_WIDTH - mario.w) / 20;
 
     //require float resolution for y position
-    float y_pos = SCREEN_HEIGHT;
+    float y_pos = (SCREEN_HEIGHT- mario.h);
+    float x_pos = (SCREEN_WIDTH - mario.w);
+
+    //sprite initial velocity
+    float x_vel = SPEED;
+    float y_vel = SPEED;
+
+    //set to 1 when window close button is pressed
+    int close_requested = 0;
 
     //animation loop
-    while(mario.y>=-mario.h){
-        //limpar janela a cada frame
-        SDL_RenderClear(render);
-
-        //set the y pos in the struct
-        mario.y = (int) y_pos;
-
-        //draw the image to the window
-        SDL_RenderCopy(render,texture, NULL, &mario);
-        SDL_RenderPresent(render);
-
-        //update sprite position
-        y_pos -= (float) SCROLL_SPEED / 60;
-
-        //wait 1/60th of a second
-        SDL_Delay(1000/60);
+    while (close_requested == 0){
+        //process events
+        SDL_Event fecharJanela;
+        //fechar janela com X
+        while(SDL_PollEvent(&fecharJanela)){
+            //SDK_QUIT é o evento quando pressiona X
+            if(fecharJanela.type == SDL_QUIT){
+                close_requested = 1;
+            }
+        }
+        
     }
+    
     
 
     //limpa janela, remove o "lixo" e tranforma o fundo em preto
@@ -128,7 +138,7 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou o SDL\n");
-        window = SDL_CreateWindow("v0.0.01", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+        window = SDL_CreateWindow("v0.0.02", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
         if(window == NULL){
             printf("Deu merda na janela! SDL_Error: %s\n", SDL_GetError());
             SDL_Quit();
