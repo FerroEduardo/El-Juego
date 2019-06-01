@@ -3,9 +3,14 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
-//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs`
+#include "customlib.h"
+
+
+//VERSÃO
+#define version "0.0.04"
+//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs` customlib.h
 //compila e abre se nao tiver erro
-//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs` && ./game
+//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs` customlib.h && ./game
 //SDL_Image, SDL_Mixer, SDL_Ttf, SDL_Gfx
 //http://www.lazyfoo.net/tutorials/SDL/01_hello_SDL/index2.php
 //https://www.youtube.com/watch?v=yFLa3ln16w0
@@ -26,6 +31,8 @@ SDL_Surface *screenSurface = NULL;
 
 int inicializar();
 int finalizar();
+void nobreu();
+int startAudio();
 /*
 SDL surface is merely a struct that represents image data in memory.
 A texture corresponds to image data loaded into the graphic's hardware's memory.
@@ -53,7 +60,7 @@ int main(int argc, char* args[]){
         SDL_Quit();
         return 1;
     }
-
+    
     //carrega imagem na memoria de video,VRAM
     SDL_Texture *texture = SDL_CreateTextureFromSurface(render, screenSurface);
     SDL_FreeSurface(screenSurface);
@@ -64,6 +71,26 @@ int main(int argc, char* args[]){
         SDL_Quit();
         return 1;
     }
+
+    SDL_Surface *screenSurface2 = IMG_Load("recursos/teste.jpg");
+    if(screenSurface2==NULL){
+        printf("Deu merda ao criar SURFACE2! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+    
+    SDL_Texture *texture2 = SDL_CreateTextureFromSurface(render, screenSurface2);
+    SDL_FreeSurface(screenSurface2);
+    if(texture2==NULL){
+        printf("Deu merda ao criar TEXTURE! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+    
     
     SDL_RenderClear(render);
     //sdl_rect, struct do tamanho do sprite e posicao
@@ -74,6 +101,8 @@ int main(int argc, char* args[]){
     mario.w = 32;
     mario.h = 32;
     */
+    
+
 
     //pega as dim da textura
     SDL_QueryTexture(texture, NULL, NULL, &mario.w, &mario.h);
@@ -85,31 +114,16 @@ int main(int argc, char* args[]){
     mario.x = (SCREEN_WIDTH - mario.w) / 20;
 
     //require float resolution for y position
-    float y_pos = (SCREEN_HEIGHT- mario.h);
+    float y_pos = (SCREEN_HEIGHT - mario.h);
     float x_pos = (SCREEN_WIDTH - mario.w);
 
     
 
     //set to 1 when window close button is pressed
     int close_requested = 0;
-    //inicia "driver" de audio
-    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024);
-    if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024)==-1) {
-        printf("erro no Mix_OpenAudio: %s\n", Mix_GetError());
-        SDL_DestroyRenderer(render);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-    //salva musica para carregar/tocar depois
-    Mix_Chunk *nobreu = Mix_LoadWAV("recursos/nobreu.wav");
-    if(nobreu==NULL){
-        printf("erro NOBREU: %s\n", Mix_GetError());
-    }
-    //volume da faixa, "-1" muda o volume de todos os canais
-    Mix_Volume(-1,MIX_MAX_VOLUME/1);
-    //"-1" toca faixa no prox canal disponivel
-    Mix_PlayChannel(-1,nobreu,-1);
+        
+    startAudio();
+    nobreu();
 
     //animation loop
     while (close_requested == 0){
@@ -132,7 +146,9 @@ int main(int argc, char* args[]){
                 mario.y = (int) y_pos;
 
                 //draw the image to the window
+                SDL_RenderCopy(render,texture2, NULL, NULL);
                 SDL_RenderCopy(render,texture, NULL, &mario);
+                
                 SDL_RenderPresent(render);
 
                 //update sprite position
@@ -142,8 +158,7 @@ int main(int argc, char* args[]){
                 SDL_Delay(1000/60);
                 
             }
-        }
-        
+        }        
         
         
     }
@@ -179,7 +194,7 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou o SDL\n");
-        window = SDL_CreateWindow("v0.0.03", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+        window = SDL_CreateWindow(version, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
         if(window == NULL){
             printf("Deu merda na janela! SDL_Error: %s\n", SDL_GetError());
             SDL_Quit();
@@ -197,15 +212,41 @@ int inicializar(){
         
         //Wait two seconds
         //SDL_Delay(2000);
-            
-        
+
 }
 
 int finalizar(){
+    printf("Finaliza SDL\n");
     //Destroy window
 	SDL_DestroyWindow(window);
 	window = NULL;
 
 	//Quit SDL subsystems
 	SDL_Quit();
+}
+
+void nobreu(){
+    printf("Toca PEGA NO BREU\n");
+    //salva musica para carregar/tocar depois
+    Mix_Chunk *nobreu = Mix_LoadWAV("recursos/nobreu.wav");
+    if(nobreu==NULL){
+        printf("erro NOBREU: %s\n", Mix_GetError());
+    }
+    //volume da faixa, "-1" muda o volume de todos os canais
+    Mix_Volume(-1,MIX_MAX_VOLUME/20);
+    //"-1" toca faixa no prox canal disponivel
+    Mix_PlayChannel(-1,nobreu,-1);
+
+}
+
+int startAudio(){
+    //inicia "driver" de audio
+    printf("Iniciou AUDIO\n");
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024);
+    if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024)==-1) {
+        printf("Merda no Mix_OpenAudio: %s\n", Mix_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
 }
