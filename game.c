@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.08"
+#define version "0.0.09" 
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -53,7 +53,7 @@ int main(int argc, char* args[]){
     inicializar();  
     startRenderer();
     //PLAYER------------
-    //carrega imagem na memoria do pc,provavelmente na RAM
+    //carrega imagem na memoria do pc,provavelmente na RAM "mario.png"
     SDL_Surface *surfPlayer = IMG_Load("recursos/mario.png");
     if(surfPlayer==NULL){
         printf("Deu merda ao criar surfPlayer! SDL_Error: %s\n", SDL_GetError());
@@ -129,10 +129,10 @@ int main(int argc, char* args[]){
         return 1;
     }
     SDL_Rect rectEnemy1;
-    rectEnemy1.w = 75;
-    rectEnemy1.h = 75;
-    rectEnemy1.x = 0;
-    rectEnemy1.y = 0;
+    rectEnemy1.w = 100;
+    rectEnemy1.h = 100;
+    rectEnemy1.x = 100;
+    rectEnemy1.y = 190;
     //-----------------
     
     
@@ -205,22 +205,57 @@ int main(int argc, char* args[]){
                     break;
             }
             //fim teclas
-            //colisao com "janela"
-            
-            if(rectPlayer.y + rectPlayer.h> SCREEN_HEIGHT){
+            //colisao com "janela"            
+            if(rectPlayer.y + rectPlayer.h >= SCREEN_HEIGHT){
                 desce=0;
             }
-            if(rectPlayer.y == 0){
+            if(rectPlayer.y <= 0){
                 sobe=0;
             }
-            if(rectPlayer.x+rectPlayer.w == SCREEN_WIDTH){
+            if(rectPlayer.x+rectPlayer.w >= SCREEN_WIDTH){
                 direita=0;
             }
-            if(rectPlayer.x == 0){
+            if(rectPlayer.x <= 0){
                 esquerda=0;
             }
-            
-            //locomocao            
+            //fim colisao com janela
+            //colisao player com outro rect
+            if(rectPlayer.x+rectPlayer.w>=rectEnemy1.x &&
+            rectPlayer.y < rectEnemy1.y +rectEnemy1.h &&
+            rectPlayer.y + rectPlayer.h > rectEnemy1.y &&
+            rectPlayer.x < rectEnemy1.x + rectEnemy1.w             
+            ){
+                direita=0;
+            }
+            if(rectPlayer.y <= rectEnemy1.y + rectEnemy1.h &&
+            rectPlayer.x+rectPlayer.w>rectEnemy1.x &&
+            rectPlayer.x < rectEnemy1.x + rectEnemy1.w 
+            ){
+                sobe=0;
+            }
+            if(rectPlayer.x <= rectEnemy1.x + rectEnemy1.w &&
+            rectPlayer.y < rectEnemy1.y + rectEnemy1.h &&
+            rectPlayer.y + rectPlayer.h > rectEnemy1.y
+                       
+            ){
+                esquerda=0;
+            }
+            if(rectPlayer.y+rectPlayer.h>=rectEnemy1.y &&
+            rectPlayer.y + rectPlayer.h >= rectEnemy1.y &&
+            rectPlayer.x < rectEnemy1.x + rectEnemy1.w &&
+            rectPlayer.x + rectPlayer.w > rectEnemy1.x
+            ){
+                desce=0;
+            }
+            //fim colisao de player com outro rect
+
+
+
+
+
+
+            //fim colisao rect
+            //locomocao player            
             if(sobe==1){
                 rectPlayer.y -=speedPlayer;
             }
@@ -234,6 +269,7 @@ int main(int argc, char* args[]){
                 rectPlayer.x +=speedPlayer;
             }
             //fim locomocao
+
             
 
 
