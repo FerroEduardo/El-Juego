@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.05"
+#define version "0.0.06"
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs` customlib.h
 //compila e abre se nao tiver erro
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs` customlib.h && ./game
@@ -26,8 +26,8 @@ const int SCREEN_HEIGHT = 480;
 
 //variaveis globais
 SDL_Window *window = NULL;
-SDL_Surface *surfPlayer = NULL;
 SDL_Renderer *render = NULL;
+SDL_Surface *surfPlayer = NULL;
 SDL_Texture *texturePlayer = NULL;
 
 
@@ -47,36 +47,96 @@ int main(int argc, char* args[]){
 
     inicializar();  
     startRenderer();
-    player();
+    //PLAYER------------
+    //carrega imagem na memoria do pc,provavelmente na RAM
+    SDL_Surface *surfPlayer = IMG_Load("recursos/mario.png");
+    if(surfPlayer==NULL){
+        printf("Deu merda ao criar surfPlayer! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }    
+    //carrega imagem na memoria de video,VRAM
+    SDL_Texture *texturePlayer = SDL_CreateTextureFromSurface(render, surfPlayer);
+    SDL_FreeSurface(surfPlayer);
+    if(texturePlayer==NULL){
+        printf("Deu merda ao criar texturePlayer! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+    SDL_Rect rectPlayer;
+    /*
+    rectPlayer.x = 0;
+    rectPlayer.y = 0;
+    rectPlayer.w = 32;
+    rectPlayer.h = 32;
+    */
+    rectPlayer.w = 100;
+    rectPlayer.h = 100;
+    // h/height altura
+    // w/width largura
+
+    SDL_RenderClear(render);
+    //---------------------
+    SDL_Surface *surfBACKGROUND = IMG_Load("recursos/forest.png");
+    if(surfBACKGROUND==NULL){
+        printf("Deu merda ao criar surfBACKGROUND! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }    
+    SDL_Texture *texBACKGROUND = SDL_CreateTextureFromSurface(render, surfBACKGROUND);
+    SDL_FreeSurface(surfBACKGROUND);
+    if(texBACKGROUND==NULL){
+        printf("Deu merda ao criar texBACKGROUND! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+    SDL_RenderClear(render);
+
+    
+    
     //PLAYER
+    
 
     
     //set to 1 when window close button is pressed
     int close_requested = 0;
         
     startAudio();
-    nobreu();
+    //nobreu();
 
     //animation loop
     while (close_requested == 0){
         //process events
         SDL_Event fecharJanela;
         //fechar janela com X
-        
         while(SDL_PollEvent(&fecharJanela)){
-            //SDK_QUIT é o evento quando pressiona X
+            //SDL_QUIT é o evento quando pressiona X
             if(fecharJanela.type == SDL_QUIT){
                 close_requested = 1;
-            }
-            
-            
-                
-            
-        }          
+            }   
+             
+        }     
         
+        SDL_RenderClear(render);
+        SDL_RenderCopy(render, texBACKGROUND, NULL, NULL);
+        SDL_RenderCopy(render, texturePlayer, NULL, &rectPlayer);
+        
+        SDL_RenderPresent(render);     
+        SDL_Delay(1000/60);  
     }
-
+    
+    SDL_FreeSurface(surfPlayer);
     SDL_DestroyTexture(texturePlayer);
+    SDL_FreeSurface(surfBACKGROUND);
+    SDL_DestroyTexture(texBACKGROUND);
     SDL_DestroyRenderer(render);
     
     
@@ -93,7 +153,7 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou o SDL\n");
-        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE;
+        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE;
         window = SDL_CreateWindow(version, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, flagsCreateWindow );
         if(window == NULL){
             printf("Deu merda na janela! SDL_Error: %s\n", SDL_GetError());
@@ -101,6 +161,7 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou a JANELA\n");
+        return 0;
 }
 
 int finalizar(){
@@ -111,6 +172,7 @@ int finalizar(){
 
 	//Quit SDL(subsystems)
 	SDL_Quit();
+    return 0;
 }
 
 void nobreu(){
@@ -143,38 +205,18 @@ int startAudio(){
         SDL_Quit();
         return 1;
     }
+    return 0;
 }
 
 int startRenderer(){
-        //cria flags para o renderer
-        Uint32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
-        render = SDL_CreateRenderer(window,-1,render_flags);
-        if(render==NULL){
-            printf("Deu merda no RENDERER! SDL_Error: %s\n", SDL_GetError());
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            return 1;
-        }
-}
-
-int player(){
-        //carrega imagem na memoria do pc,provavelmente na RAM
-        SDL_Surface *surfPlayer = IMG_Load("recursos/mario.png");
-        if(surfPlayer==NULL){
-            printf("Deu merda ao criar surfPlayer! SDL_Error: %s\n", SDL_GetError());
-            SDL_DestroyRenderer(render);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            return 1;
-        }    
-        //carrega imagem na memoria de video,VRAM
-        SDL_Texture *texturePlayer = SDL_CreateTextureFromSurface(render, surfPlayer);
-        SDL_FreeSurface(surfPlayer);
-        if(texturePlayer==NULL){
-            printf("Deu merda ao criar texturePlayer! SDL_Error: %s\n", SDL_GetError());
-            SDL_DestroyRenderer(render);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            return 1;
-        }
+    //cria flags para o renderer
+    Uint32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
+    render = SDL_CreateRenderer(window,-1,render_flags);
+    if(render==NULL){
+        printf("Deu merda no RENDERER! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+    return 0;
 }
