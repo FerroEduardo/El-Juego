@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.07"
+#define version "0.0.08"
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -18,12 +18,16 @@
 //https://www.youtube.com/watch?v=yFLa3ln16w0
 
 //tamanho da janela
+//largura
 const int SCREEN_WIDTH = 640;
+//altura
 const int SCREEN_HEIGHT = 480;
 
 //speed in pixels/second
 #define SCROLL_SPEED 300
 #define SPEED 300
+
+#define speedPlayer 10
 
 //variaveis globais
 SDL_Window *window = NULL;
@@ -75,15 +79,17 @@ int main(int argc, char* args[]){
     rectPlayer.w = 32;
     rectPlayer.h = 32;
     */
-    rectPlayer.x = 0;
-    rectPlayer.y = 0;
     rectPlayer.w = 100;
     rectPlayer.h = 100;
+    rectPlayer.x = (SCREEN_WIDTH/2) - (rectPlayer.w/2);
+    rectPlayer.y = (SCREEN_HEIGHT /2) -(rectPlayer.h/2);
+
     // h/height altura
     // w/width largura
 
     SDL_RenderClear(render);
     //---------------------
+    //BACKGROUND-----------
     SDL_Surface *surfBACKGROUND = IMG_Load("recursos/forest.png");
     if(surfBACKGROUND==NULL){
         printf("Deu merda ao criar surfBACKGROUND! SDL_Error: %s\n", SDL_GetError());
@@ -102,18 +108,42 @@ int main(int argc, char* args[]){
         return 1;
     }
     SDL_RenderClear(render);
-
+    int sobe, desce;
+    int esquerda,direita;
+    //---------------------
+    //ENEMY1----------
+    SDL_Surface *surfEnemy = IMG_Load("recursos/enemy1.jpeg");
+    if(surfEnemy==NULL){
+        printf("Deu merda ao criar surfEnemy! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }    
+    SDL_Texture *texEnemy = SDL_CreateTextureFromSurface(render, surfEnemy);
+    if(texEnemy==NULL){
+        printf("Deu merda ao criar texEnemy! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+    SDL_Rect rectEnemy1;
+    rectEnemy1.w = 75;
+    rectEnemy1.h = 75;
+    rectEnemy1.x = 0;
+    rectEnemy1.y = 0;
+    //-----------------
     
     
-    //PLAYER
     
 
     
     //set to 1 when window close button is pressed
     int close_requested = 0;
         
-    startAudio();
-    nobreu();
+    //startAudio();
+    //nobreu();
 
     //animation loop
     int startou = 0;
@@ -122,48 +152,101 @@ int main(int argc, char* args[]){
             printf("Iniciou o JOGO\n");
             startou = 1;
         }
+        
         //process events
         SDL_Event evento;
         
         while (SDL_PollEvent(&evento)){
             switch (evento.type){
-            case SDL_QUIT:
-                close_requested = 1;
-            break;
-            case SDL_KEYDOWN:
-                switch (evento.key.keysym.scancode){
-                    case SDL_SCANCODE_W:
-                        rectPlayer.y -= 10;
-                        break;
-                    case SDL_SCANCODE_A:
-                        rectPlayer.x -= 10;
-                        break;
-                    case SDL_SCANCODE_S:
-                        rectPlayer.y += 10;
-                        break;
-                    case SDL_SCANCODE_D:
-                        rectPlayer.x += 10;
-                        break;
-                }
-            case SDL_KEYUP:
-                switch (evento.key.keysym.scancode){
-                    case SDL_SCANCODE_W:
-                        rectPlayer.y -= 1;
-                        break;
-                    case SDL_SCANCODE_A:
-                        rectPlayer.x -= 1;
-                        break;
-                    case SDL_SCANCODE_S:
-                        rectPlayer.y += 1;
-                        break;
-                    case SDL_SCANCODE_D:
-                        rectPlayer.x += 1;
-                        break;
-                }
+                case SDL_QUIT:
+                    close_requested = 1;
+                break;
+                case SDL_KEYDOWN:
+                //pressiona wasd ou setas para andar
+                    switch (evento.key.keysym.scancode){
+                        case SDL_SCANCODE_W:
+                        case SDL_SCANCODE_UP:
+                            sobe=1;
+                            break;
+                        case SDL_SCANCODE_A:
+                        case SDL_SCANCODE_LEFT:
+                            esquerda=1;
+                            break;
+                        case SDL_SCANCODE_S:
+                        case SDL_SCANCODE_DOWN:
+                            desce=1;
+                            break;
+                        case SDL_SCANCODE_D:
+                        case SDL_SCANCODE_RIGHT:
+                            direita=1;
+                            break;
+                    }
+                break;
+                
+                case SDL_KEYUP:
+                    switch (evento.key.keysym.scancode){
+                        case SDL_SCANCODE_W:
+                        case SDL_SCANCODE_UP:
+                            sobe=0;
+                            break;
+                        case SDL_SCANCODE_A:
+                        case SDL_SCANCODE_LEFT:
+                            esquerda=0;
+                            break;
+                        case SDL_SCANCODE_S:
+                        case SDL_SCANCODE_DOWN:
+                            desce=0;
+                            break;
+                        case SDL_SCANCODE_D:
+                        case SDL_SCANCODE_RIGHT:
+                            direita=0;
+                            break;
+                    }
+                    break;
             }
+            //fim teclas
+            //colisao com "janela"
+            
+            if(rectPlayer.y + rectPlayer.h> SCREEN_HEIGHT){
+                desce=0;
+            }
+            if(rectPlayer.y == 0){
+                sobe=0;
+            }
+            if(rectPlayer.x+rectPlayer.w == SCREEN_WIDTH){
+                direita=0;
+            }
+            if(rectPlayer.x == 0){
+                esquerda=0;
+            }
+            
+            //locomocao            
+            if(sobe==1){
+                rectPlayer.y -=speedPlayer;
+            }
+            if(desce==1){
+                rectPlayer.y +=speedPlayer;
+            }
+            if(esquerda==1){
+                rectPlayer.x -=speedPlayer;
+            }
+            if(direita==1){
+                rectPlayer.x +=speedPlayer;
+            }
+            //fim locomocao
+            
+
+
+
+
+
+
+
+
         SDL_RenderClear(render);
         SDL_RenderCopy(render, texBACKGROUND, NULL, NULL);
         SDL_RenderCopy(render, texturePlayer, NULL, &rectPlayer);        
+        SDL_RenderCopy(render, texEnemy, NULL, &rectEnemy1);        
         SDL_RenderPresent(render);     
         SDL_Delay(1000/60); 
         
