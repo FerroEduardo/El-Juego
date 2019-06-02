@@ -1,0 +1,19 @@
+/*CRIAR SURFACE E TEXTURE
+SDL_Surface *[surfNAME] = IMG_Load("[surfLOCATION]");
+    if([surfNAME]==NULL){
+        printf("Deu merda ao criar [surfNAME]! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }    
+    SDL_Texture *[texNAME] = SDL_CreateTextureFromSurface(render, [surfNAME]);
+    //SDL_FreeSurface([surfNAME]);
+    if([texNAME]==NULL){
+        printf("Deu merda ao criar [texNAME]! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+*/

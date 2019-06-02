@@ -8,10 +8,11 @@
 
 
 //VERSÃO
-#define version "0.0.06"
-//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs` customlib.h
+#define version "0.0.07"
+//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
+//-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
-//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall `sdl2-config --libs` customlib.h && ./game
+//gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch && ./game
 //SDL_Image, SDL_Mixer, SDL_Ttf, SDL_Gfx
 //http://www.lazyfoo.net/tutorials/SDL/01_hello_SDL/index2.php
 //https://www.youtube.com/watch?v=yFLa3ln16w0
@@ -59,7 +60,7 @@ int main(int argc, char* args[]){
     }    
     //carrega imagem na memoria de video,VRAM
     SDL_Texture *texturePlayer = SDL_CreateTextureFromSurface(render, surfPlayer);
-    SDL_FreeSurface(surfPlayer);
+    //SDL_FreeSurface(surfPlayer);
     if(texturePlayer==NULL){
         printf("Deu merda ao criar texturePlayer! SDL_Error: %s\n", SDL_GetError());
         SDL_DestroyRenderer(render);
@@ -74,6 +75,8 @@ int main(int argc, char* args[]){
     rectPlayer.w = 32;
     rectPlayer.h = 32;
     */
+    rectPlayer.x = 0;
+    rectPlayer.y = 0;
     rectPlayer.w = 100;
     rectPlayer.h = 100;
     // h/height altura
@@ -90,7 +93,7 @@ int main(int argc, char* args[]){
         return 1;
     }    
     SDL_Texture *texBACKGROUND = SDL_CreateTextureFromSurface(render, surfBACKGROUND);
-    SDL_FreeSurface(surfBACKGROUND);
+    //SDL_FreeSurface(surfBACKGROUND);
     if(texBACKGROUND==NULL){
         printf("Deu merda ao criar texBACKGROUND! SDL_Error: %s\n", SDL_GetError());
         SDL_DestroyRenderer(render);
@@ -110,27 +113,62 @@ int main(int argc, char* args[]){
     int close_requested = 0;
         
     startAudio();
-    //nobreu();
+    nobreu();
 
     //animation loop
+    int startou = 0;
     while (close_requested == 0){
+        if(startou==0){
+            printf("Iniciou o JOGO\n");
+            startou = 1;
+        }
         //process events
-        SDL_Event fecharJanela;
-        //fechar janela com X
-        while(SDL_PollEvent(&fecharJanela)){
-            //SDL_QUIT é o evento quando pressiona X
-            if(fecharJanela.type == SDL_QUIT){
-                close_requested = 1;
-            }   
-             
-        }     
+        SDL_Event evento;
         
+        while (SDL_PollEvent(&evento)){
+            switch (evento.type){
+            case SDL_QUIT:
+                close_requested = 1;
+            break;
+            case SDL_KEYDOWN:
+                switch (evento.key.keysym.scancode){
+                    case SDL_SCANCODE_W:
+                        rectPlayer.y -= 10;
+                        break;
+                    case SDL_SCANCODE_A:
+                        rectPlayer.x -= 10;
+                        break;
+                    case SDL_SCANCODE_S:
+                        rectPlayer.y += 10;
+                        break;
+                    case SDL_SCANCODE_D:
+                        rectPlayer.x += 10;
+                        break;
+                }
+            case SDL_KEYUP:
+                switch (evento.key.keysym.scancode){
+                    case SDL_SCANCODE_W:
+                        rectPlayer.y -= 1;
+                        break;
+                    case SDL_SCANCODE_A:
+                        rectPlayer.x -= 1;
+                        break;
+                    case SDL_SCANCODE_S:
+                        rectPlayer.y += 1;
+                        break;
+                    case SDL_SCANCODE_D:
+                        rectPlayer.x += 1;
+                        break;
+                }
+            }
         SDL_RenderClear(render);
         SDL_RenderCopy(render, texBACKGROUND, NULL, NULL);
-        SDL_RenderCopy(render, texturePlayer, NULL, &rectPlayer);
-        
+        SDL_RenderCopy(render, texturePlayer, NULL, &rectPlayer);        
         SDL_RenderPresent(render);     
-        SDL_Delay(1000/60);  
+        SDL_Delay(1000/60); 
+        
+        }     
+ 
     }
     
     SDL_FreeSurface(surfPlayer);
