@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.09" 
+#define version "0.0.10" 
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -18,16 +18,23 @@
 //https://www.youtube.com/watch?v=yFLa3ln16w0
 
 //tamanho da janela
-//largura
-const int SCREEN_WIDTH = 640;
-//altura
-const int SCREEN_HEIGHT = 480;
+//largura 640
+int SCREEN_WIDTH = 1280;
+int width = 1280;
+//altura 480
+int SCREEN_HEIGHT = 720;
+int height = 720;
+//escala 16:9
+double ESCALA = 16.f/9.f;
 
 //speed in pixels/second
 #define SCROLL_SPEED 300
 #define SPEED 300
 
 #define speedPlayer 10
+#define FPS 60
+#define framedelay 1000/FPS
+#define cutdelay 100
 
 //variaveis globais
 SDL_Window *window = NULL;
@@ -50,6 +57,7 @@ So a surface is in regular memory, and a texture is in this separate VRAM.
 
 int main(int argc, char* args[]){ 
 
+    int cutscene = 1;
     inicializar();  
     startRenderer();
     //PLAYER------------
@@ -134,7 +142,41 @@ int main(int argc, char* args[]){
     rectEnemy1.x = 100;
     rectEnemy1.y = 190;
     //-----------------
+    //enemy2-----------
+    SDL_Surface *surfEnemy2 = IMG_Load("recursos/enemy2.png");
+    if(surfEnemy2==NULL){
+        printf("Deu merda ao criar surfEnemy2! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }    
+    SDL_Texture *texEnemy2 = SDL_CreateTextureFromSurface(render, surfEnemy2);
+    //SDL_FreeSurface(surfEnemy2);
+    if(texEnemy2==NULL){
+        printf("Deu merda ao criar texEnemy2! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+    SDL_Rect rectEnemy2;
     
+    rectEnemy2.w = 100;
+    rectEnemy2.h = 100;
+    rectEnemy2.x = 300;
+    rectEnemy2.y = 200;
+    
+    //-----------------
+    SDL_Surface *surfSprite = IMG_Load("recursos/8xCUTSCENE.png");
+    SDL_Texture *texSprite = SDL_CreateTextureFromSurface(render, surfSprite);
+    SDL_Rect rectScene;
+    rectScene.x = 0;
+    rectScene.y = 0;
+    rectScene.h = SCREEN_HEIGHT;
+    rectScene.w = SCREEN_WIDTH;
+    SDL_Surface *screen = NULL;
+    SDL_Rect recorte = { 0 , 0, 258, 146};
     
     
 
@@ -142,6 +184,8 @@ int main(int argc, char* args[]){
     //set to 1 when window close button is pressed
     int close_requested = 0;
         
+    uint32_t framestart;
+    uint32_t frameTime;
     //startAudio();
     //nobreu();
 
@@ -157,10 +201,13 @@ int main(int argc, char* args[]){
         SDL_Event evento;
         
         while (SDL_PollEvent(&evento)){
+
+            framestart = SDL_GetTicks();
             switch (evento.type){
                 case SDL_QUIT:
                     close_requested = 1;
                 break;
+                
                 case SDL_KEYDOWN:
                 //pressiona wasd ou setas para andar
                     switch (evento.key.keysym.scancode){
@@ -179,6 +226,9 @@ int main(int argc, char* args[]){
                         case SDL_SCANCODE_D:
                         case SDL_SCANCODE_RIGHT:
                             direita=1;
+                            break;
+                        case SDL_SCANCODE_END:
+                            close_requested = 1;
                             break;
                     }
                 break;
@@ -203,9 +253,33 @@ int main(int argc, char* args[]){
                             break;
                     }
                     break;
+                case SDL_WINDOWEVENT:
+                    switch (evento.window.event){
+                    case SDL_WINDOWEVENT_RESIZED:
+                        width = evento.window.data1;
+                        height = evento.window.data2;
+                        int escala = (double)width/(double)height;
+                        if(ESCALA != escala){
+                            if(escala>ESCALA){
+                                height = (1.f / ESCALA)* width;
+                            }
+                            else{
+                                width = ESCALA * height;
+                            }
+                            printf("Definindo tamanho de tela para %d:%d, na escala: %f\n", 
+                                width, height, (double)width/(double)height);
+                        }
+                        SCREEN_WIDTH = width;
+                        SCREEN_HEIGHT = height;
+                        SDL_SetWindowSize(window,width,height);
+                        break;                    
+
+                    }
+                    break;
             }
             //fim teclas
-            //colisao com "janela"            
+            //colisao com "janela"
+
             if(rectPlayer.y + rectPlayer.h >= SCREEN_HEIGHT){
                 desce=0;
             }
@@ -259,39 +333,70 @@ int main(int argc, char* args[]){
             if(sobe==1){
                 rectPlayer.y -=speedPlayer;
             }
-            if(desce==1){
+            else if(desce==1){
                 rectPlayer.y +=speedPlayer;
             }
-            if(esquerda==1){
+            else if(esquerda==1){
                 rectPlayer.x -=speedPlayer;
             }
-            if(direita==1){
+            else if(direita==1){
                 rectPlayer.x +=speedPlayer;
             }
             //fim locomocao
 
-            
+            if(cutscene==1){
+                if(recorte.x<=7998 && recorte.y == 0){
+                    recorte.x += 258;
+                    if(recorte.x>7998){
+                        recorte.x = 0;
+                        recorte.y += 146;
+                    }
+                }
+                else if(recorte.y == 146){
+                    recorte.x += 258;
+                }
+                if(recorte.x >= 7998 && recorte.y == 146){
+                        cutscene = 0;
+                        SDL_DestroyTexture(texSprite);
+                }
+            }
 
 
 
 
 
 
+            frameTime = SDL_GetTicks() - framestart;
+            SDL_RenderClear(render);
+            SDL_RenderCopy(render, texBACKGROUND, NULL, NULL);
+            SDL_RenderCopy(render, texturePlayer, NULL, &rectPlayer);
+            SDL_RenderCopy(render, texEnemy, NULL, &rectEnemy1);
+            SDL_RenderCopy(render, texEnemy2, NULL, &rectEnemy2);
+            if(cutscene==1)
+                SDL_RenderCopy(render, texSprite, &recorte, &rectScene);
+            SDL_RenderPresent(render);
+            if(cutscene==1){
+                if(cutdelay > frameTime){
+                    SDL_Delay((cutdelay) - frameTime);
+                }
+            }
+            else if(cutscene == 0){
+                if(framedelay > frameTime){
+                    SDL_Delay((framedelay) - frameTime);
+                }
+            }
+                
 
-
-        SDL_RenderClear(render);
-        SDL_RenderCopy(render, texBACKGROUND, NULL, NULL);
-        SDL_RenderCopy(render, texturePlayer, NULL, &rectPlayer);        
-        SDL_RenderCopy(render, texEnemy, NULL, &rectEnemy1);        
-        SDL_RenderPresent(render);     
-        SDL_Delay(1000/60); 
-        
         }     
  
     }
     
     SDL_FreeSurface(surfPlayer);
     SDL_DestroyTexture(texturePlayer);
+    SDL_DestroyTexture(texEnemy);
+    SDL_DestroyTexture(texEnemy2);
+    SDL_DestroyTexture(texSprite);
+    SDL_FreeSurface(surfSprite);
     SDL_FreeSurface(surfBACKGROUND);
     SDL_DestroyTexture(texBACKGROUND);
     SDL_DestroyRenderer(render);
@@ -310,7 +415,7 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou o SDL\n");
-        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE;
+        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE | SDL_RENDERER_PRESENTVSYNC /*| SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN_DESKTOP*/;
         window = SDL_CreateWindow(version, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, flagsCreateWindow );
         if(window == NULL){
             printf("Deu merda na janela! SDL_Error: %s\n", SDL_GetError());
