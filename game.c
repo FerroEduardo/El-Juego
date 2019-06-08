@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.10" 
+#define version "0.0.11" 
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -168,15 +168,7 @@ int main(int argc, char* args[]){
     rectEnemy2.y = 200;
     
     //-----------------
-    SDL_Surface *surfSprite = IMG_Load("recursos/8xCUTSCENE.png");
-    SDL_Texture *texSprite = SDL_CreateTextureFromSurface(render, surfSprite);
-    SDL_Rect rectScene;
-    rectScene.x = 0;
-    rectScene.y = 0;
-    rectScene.h = SCREEN_HEIGHT;
-    rectScene.w = SCREEN_WIDTH;
-    SDL_Surface *screen = NULL;
-    SDL_Rect recorte = { 0 , 0, 258, 146};
+    
     
     
 
@@ -344,22 +336,7 @@ int main(int argc, char* args[]){
             }
             //fim locomocao
 
-            if(cutscene==1){
-                if(recorte.x<=7998 && recorte.y == 0){
-                    recorte.x += 258;
-                    if(recorte.x>7998){
-                        recorte.x = 0;
-                        recorte.y += 146;
-                    }
-                }
-                else if(recorte.y == 146){
-                    recorte.x += 258;
-                }
-                if(recorte.x >= 7998 && recorte.y == 146){
-                        cutscene = 0;
-                        SDL_DestroyTexture(texSprite);
-                }
-            }
+            
 
 
 
@@ -372,19 +349,11 @@ int main(int argc, char* args[]){
             SDL_RenderCopy(render, texturePlayer, NULL, &rectPlayer);
             SDL_RenderCopy(render, texEnemy, NULL, &rectEnemy1);
             SDL_RenderCopy(render, texEnemy2, NULL, &rectEnemy2);
-            if(cutscene==1)
-                SDL_RenderCopy(render, texSprite, &recorte, &rectScene);
             SDL_RenderPresent(render);
-            if(cutscene==1){
-                if(cutdelay > frameTime){
-                    SDL_Delay((cutdelay) - frameTime);
-                }
+            if(framedelay > frameTime){
+                SDL_Delay((framedelay) - frameTime);
             }
-            else if(cutscene == 0){
-                if(framedelay > frameTime){
-                    SDL_Delay((framedelay) - frameTime);
-                }
-            }
+            
                 
 
         }     
@@ -395,8 +364,6 @@ int main(int argc, char* args[]){
     SDL_DestroyTexture(texturePlayer);
     SDL_DestroyTexture(texEnemy);
     SDL_DestroyTexture(texEnemy2);
-    SDL_DestroyTexture(texSprite);
-    SDL_FreeSurface(surfSprite);
     SDL_FreeSurface(surfBACKGROUND);
     SDL_DestroyTexture(texBACKGROUND);
     SDL_DestroyRenderer(render);
@@ -415,7 +382,7 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou o SDL\n");
-        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE | SDL_RENDERER_PRESENTVSYNC /*| SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN_DESKTOP*/;
+        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE | SDL_RENDERER_PRESENTVSYNC | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN_DESKTOP;
         window = SDL_CreateWindow(version, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, flagsCreateWindow );
         if(window == NULL){
             printf("Deu merda na janela! SDL_Error: %s\n", SDL_GetError());
