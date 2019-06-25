@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.14" 
+#define version "0.0.15" 
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -205,7 +205,7 @@ int main(int argc, char* args[]){
     rectScene.y = 0;
     rectScene.h = SCREEN_HEIGHT;
     rectScene.w = SCREEN_WIDTH;
-    SDL_Surface *screen = NULL;
+    //SDL_Surface *screen = NULL;
     SDL_Rect recorte = { 0 , 0, 258, 146};
     
     
@@ -219,9 +219,10 @@ int main(int argc, char* args[]){
     int startMMenu=0;
     startAudio();
     //nobreu();
-
+    Mix_Chunk *bomba = Mix_LoadWAV("recursos/bomba.mp3");
     //animation loop
     printf("Iniciou o JOGO\n");
+    time_t timeStart= time(NULL);
     while (close_requested == 0){
         
         //process events
@@ -246,27 +247,29 @@ int main(int argc, char* args[]){
                         switch (evento2.key.keysym.sym){
                             case SDLK_1:
                                 Mix_FadeOutChannel(-1, 1000);
-                                statusGame=1;
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
+                                printf("Inicia CUTSCENE\n");
+                                statusGame=1;
                                 break;
                             case SDLK_2:
                                 Mix_FadeOutChannel(-1, 1000);
-                                statusGame=1;
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
+                                printf("Inicia CUTSCENE\n");
+                                statusGame=1;
                                 break;
                             case SDLK_3:
                                 Mix_FadeOutChannel(-1, 1000);
-                                statusGame=1;
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
+                                printf("Inicia CUTSCENE\n");
+                                statusGame=1;
                                 break;
                             case SDLK_4:
-                                Mix_FadeOutChannel(-1, 1000);
-                                statusGame=1;
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
+                                close_requested = 1;
                                 break;
                             case SDLK_END:
                                 SDL_FreeSurface(surfMENU);
@@ -291,6 +294,7 @@ int main(int argc, char* args[]){
         }
 
         else if(statusGame==1){
+            
             framestart = SDL_GetTicks();
                 if(recorte.x<=7998 && recorte.y == 0){
                     recorte.x += 258;
@@ -302,9 +306,15 @@ int main(int argc, char* args[]){
                 else if(recorte.y == 146){
                     recorte.x += 258;
                 }
+                if(recorte.x >= 4902 && recorte.y == 146){
+                    Mix_PlayChannel(-1,bomba,1);
+                }
                 if(recorte.x >= 7998 && recorte.y == 146){
-                        statusGame = 2;
-                        SDL_DestroyTexture(texSprite);
+                    Mix_FadeOutChannel(-1, 1000);
+                    SDL_FreeSurface(surfSprite);
+                    SDL_DestroyTexture(texSprite);
+                    printf("Inicia JOGO\n");
+                    statusGame = 2;
                 }
             
             
@@ -550,9 +560,10 @@ int main(int argc, char* args[]){
         SDL_DestroyTexture(texEnemy);
         SDL_DestroyTexture(texEnemy2);
         SDL_DestroyRenderer(render);
-        
     
-    
+    time_t timeStop= time(NULL);
+    int timeOpened = difftime(timeStop,timeStart);
+    printf("FICOU ABERTO %d segundos\n", timeOpened);
 	finalizar();
     return 0;
 }
