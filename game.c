@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.12" 
+#define version "0.0.13" 
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -52,6 +52,9 @@ int finalizar();
 void nobreu();
 int startAudio();
 int startRenderer();
+void startmusicMenu();
+
+int statusGame=0;
 /*
 SDL surface is merely a struct that represents image data in memory.
 A texture corresponds to image data loaded into the graphic's hardware's memory.
@@ -84,8 +87,8 @@ int main(int argc, char* args[]){
         return 1;
     }
     SDL_Rect rectPlayer;
-    rectPlayer.x = (SCREEN_WIDTH/2) - (rectPlayer.w/2);
-    rectPlayer.y = (SCREEN_HEIGHT /2) -(rectPlayer.h/2);
+    rectPlayer.x = (SCREEN_WIDTH/2)   - (rectPlayer.w/2);
+    rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
     rectPlayer.w = 110;
     rectPlayer.h = 120;
     
@@ -115,9 +118,30 @@ int main(int argc, char* args[]){
         return 1;
     }
 
+    SDL_Rect rectBackground = {1000,1000,1280,720};
+
+    //MENU-------------------
+    SDL_Surface *surfMENU = IMG_Load("recursos/menu.png");
+    if(surfMENU==NULL){
+        printf("Deu merda ao criar surfMENU! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }    
+    SDL_Texture *texMENU = SDL_CreateTextureFromSurface(render, surfMENU);
+    if(texMENU==NULL){
+        printf("Deu merda ao criar texMENU! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+
+    SDL_Rect rectMenu = {0,0,1280,720};
 
 
-
+    //------------------------
 
 
 
@@ -184,228 +208,315 @@ int main(int argc, char* args[]){
         
     uint32_t framestart;
     uint32_t frameTime,frameTimeSprite;
-    //startAudio();
+    int startMMenu=0;
+    startAudio();
     //nobreu();
 
     //animation loop
-    int startou = 0;
+    printf("Iniciou o JOGO\n");
     while (close_requested == 0){
-        if(startou==0){
-            printf("Iniciou o JOGO\n");
-            startou = 1;
-        }
         
         //process events
         SDL_Event evento;
-        
-        while (SDL_PollEvent(&evento)){
+        SDL_Event evento2;
 
-            framestart = SDL_GetTicks();
-            switch (evento.type){
-                case SDL_QUIT:
-                    close_requested = 1;
-                break;
-                
-                case SDL_KEYDOWN:
-                //pressiona wasd ou setas para andar
-                    switch (evento.key.keysym.scancode){
-                        case SDL_SCANCODE_UP:
-                            sobe=1;
-                            break;
-                        case SDL_SCANCODE_LEFT:
-                            esquerda=1;
-                            break;
-                        case SDL_SCANCODE_DOWN:
-                            desce=1;
-                            break;
-                        case SDL_SCANCODE_RIGHT:
-                            direita=1;
-                            break;
-                        case SDL_SCANCODE_END:
-                            close_requested = 1;
-                            break;
-                    }
-                break;
-                
-                case SDL_KEYUP:
-                    switch (evento.key.keysym.scancode){
-                        case SDL_SCANCODE_UP:
-                            sobe=0;
-                            break;
-                        case SDL_SCANCODE_LEFT:
-                            esquerda=0;
-                            break;
-                        case SDL_SCANCODE_DOWN:
-                            desce=0;
-                            break;
-                        case SDL_SCANCODE_RIGHT:
-                            direita=0;
-                            break;
-                    }
-                    break;
-                case SDL_WINDOWEVENT:
-                    switch (evento.window.event){
-                    case SDL_WINDOWEVENT_RESIZED:
-                        width = evento.window.data1;
-                        height = evento.window.data2;
-                        int escala = (double)width/(double)height;
-                        if(ESCALA != escala){
-                            if(escala>ESCALA){
-                                height = (1.f / ESCALA)* width;
-                            }
-                            else{
-                                width = ESCALA * height;
-                            }
-                            printf("Definindo tamanho de tela para %d:%d, na escala: %f\n", 
-                                width, height, (double)width/(double)height);
-                        }
-                        SCREEN_WIDTH = width;
-                        SCREEN_HEIGHT = height;
-                        SDL_SetWindowSize(window,width,height);
-                        break;                    
-
-                    }
-                    break;
+        if(statusGame==0){
+            if(startMMenu==0){
+                startmusicMenu();
+                ++startMMenu;
             }
-            //fim event loop
-            //colisao com "janela"
-
-            if(rectPlayer.y + rectPlayer.h >= SCREEN_HEIGHT){
-                desce=0;
-            }
-            if(rectPlayer.y <= 0){
-                sobe=0;
-            }
-            if(rectPlayer.x+rectPlayer.w >= SCREEN_WIDTH){
-                direita=0;
-            }
-            if(rectPlayer.x <= 0){
-                esquerda=0;
-            }
-            //fim colisao com janela
-            //colisao player com outro rect
-            if(rectPlayer.x+rectPlayer.w>=rectEnemy1.x &&
-            rectPlayer.y < rectEnemy1.y +rectEnemy1.h &&
-            rectPlayer.y + rectPlayer.h > rectEnemy1.y &&
-            rectPlayer.x < rectEnemy1.x + rectEnemy1.w             
-            ){
-                direita=0;
-            }
-            if(rectPlayer.y <= rectEnemy1.y + rectEnemy1.h &&
-            rectPlayer.x+rectPlayer.w>rectEnemy1.x &&
-            rectPlayer.x < rectEnemy1.x + rectEnemy1.w 
-            ){
-                sobe=0;
-            }
-            if(rectPlayer.x <= rectEnemy1.x + rectEnemy1.w &&
-            rectPlayer.y < rectEnemy1.y + rectEnemy1.h &&
-            rectPlayer.y + rectPlayer.h > rectEnemy1.y
-                       
-            ){
-                esquerda=0;
-            }
-            if(rectPlayer.y+rectPlayer.h>=rectEnemy1.y &&
-            rectPlayer.y + rectPlayer.h >= rectEnemy1.y &&
-            rectPlayer.x < rectEnemy1.x + rectEnemy1.w &&
-            rectPlayer.x + rectPlayer.w > rectEnemy1.x
-            ){
-                desce=0;
-            }
-            //fim colisao de player com outro rect
-
-
-
-
-
-
-            //fim colisao rect
-            //locomocao/sprite player
-            frameTimeSprite = SDL_GetTicks() - framestart;
-            if(sobe==1){
-                rectPlayer.y -=speedPlayer;
-                rectPlayerSprite.y = 0;
-                if(rectPlayerSprite.x <=66){
-                    rectPlayerSprite.x += 33;
-                }
-                if(rectPlayerSprite.x>66){
-                    rectPlayerSprite.x = 0; 
-                }
-                if(framedelay > frameTime){
-                    SDL_Delay((framedelay) - frameTimeSprite);
-                }
-            }
-            else if(desce==1){
-                rectPlayer.y +=speedPlayer;
-                rectPlayerSprite.y = 72;
-                if(rectPlayerSprite.x <=66){
-                    rectPlayerSprite.x += 33;
-                }
-                if(rectPlayerSprite.x>66){
-                    rectPlayerSprite.x = 0; 
-                }
-                if(framedelay > frameTime){
-                    SDL_Delay((framedelay) - frameTimeSprite);
-                }
-            }
-            else if(esquerda==1){
-                rectPlayer.x -=speedPlayer;
-                rectPlayerSprite.y = 108;
-                if(rectPlayerSprite.x <=66){
-                    rectPlayerSprite.x += 33;
-                }
-                if(rectPlayerSprite.x>66){
-                    rectPlayerSprite.x = 0; 
-                }
-                if(framedelay > frameTime){
-                    SDL_Delay((framedelay) - frameTimeSprite);
-                }
-            }
-            else if(direita==1){
-                rectPlayer.x +=speedPlayer;
-                rectPlayerSprite.y = 36;
-                if(rectPlayerSprite.x <=66){
-                    rectPlayerSprite.x += 33;
-                }
-                if(rectPlayerSprite.x>66){
-                    rectPlayerSprite.x = 0; 
-                }
-                if(framedelay > frameTime){
-                    SDL_Delay((framedelay) - frameTimeSprite);
-                }
-            }
-            //fim locomocao
-
             
-
-
+            framestart = SDL_GetTicks();
+            while(SDL_PollEvent(&evento2)){                
+                switch (evento2.type){
+                    case SDL_QUIT:
+                        close_requested = 1;
+                    break;
+                    
+                    case SDL_KEYDOWN:
+                    //pressiona wasd ou setas para andar
+                        switch (evento2.key.keysym.sym){
+                            case SDLK_1:
+                                Mix_FadeOutChannel(-1, 1000);
+                                statusGame=1;
+                                SDL_FreeSurface(surfMENU);
+                                SDL_DestroyTexture(texMENU);
+                                break;
+                            case SDLK_2:
+                                Mix_FadeOutChannel(-1, 1000);
+                                statusGame=1;
+                                SDL_FreeSurface(surfMENU);
+                                SDL_DestroyTexture(texMENU);
+                                break;
+                            case SDLK_3:
+                                Mix_FadeOutChannel(-1, 1000);
+                                statusGame=1;
+                                SDL_FreeSurface(surfMENU);
+                                SDL_DestroyTexture(texMENU);
+                                break;
+                            case SDLK_4:
+                                Mix_FadeOutChannel(-1, 1000);
+                                statusGame=1;
+                                SDL_FreeSurface(surfMENU);
+                                SDL_DestroyTexture(texMENU);
+                                break;
+                            case SDLK_END:
+                                SDL_FreeSurface(surfMENU);
+                                SDL_DestroyTexture(texMENU);
+                                close_requested = 1;
+                                break;
+                        }
+                    break;           
+                        }
+            }
 
 
 
 
             frameTime = SDL_GetTicks() - framestart;
             SDL_RenderClear(render);
-            SDL_RenderCopy(render, texBACKGROUND, NULL, NULL);
-            SDL_RenderCopy(render, texturePlayer, &rectPlayerSprite, &rectPlayer);
-            SDL_RenderCopy(render, texEnemy, &spriteEnemy, &rectEnemy1);
-            SDL_RenderCopy(render, texEnemy2, NULL, &rectEnemy2);
+            SDL_RenderCopy(render, texMENU, NULL, NULL);
             SDL_RenderPresent(render);
             if(framedelay > frameTime){
                 SDL_Delay((framedelay) - frameTime);
             }
-            
+        }
+
+
+
+
+        else if(statusGame==1){
+            framestart = SDL_GetTicks();
+            while (SDL_PollEvent(&evento)){                
+                switch (evento.type){
+                    case SDL_QUIT:
+                        close_requested = 1;
+                    break;
+                    
+                    case SDL_KEYDOWN:
+                    //pressiona wasd ou setas para andar
+                        switch (evento.key.keysym.sym){
+                            case SDLK_UP:
+                                sobe=1;
+                                break;
+                            case SDLK_LEFT:
+                                esquerda=1;
+                                break;
+                            case SDLK_DOWN:
+                                desce=1;
+                                break;
+                            case SDLK_RIGHT:
+                                direita=1;
+                                break;
+                            case SDLK_END:
+                                close_requested = 1;
+                                break;
+                        }
+                    break;
+                    
+                    case SDL_KEYUP:
+                        switch (evento.key.keysym.sym){
+                            case SDLK_UP:
+                                sobe=0;
+                                break;
+                            case SDLK_LEFT:
+                                esquerda=0;
+                                break;
+                            case SDLK_DOWN:
+                                desce=0;
+                                break;
+                            case SDLK_RIGHT:
+                                direita=0;
+                                break;
+                        }
+                        break;
+                    /*
+                    case SDL_WINDOWEVENT:
+                        switch (evento.window.event){
+                        case SDL_WINDOWEVENT_RESIZED:
+                            width = evento.window.data1;
+                            height = evento.window.data2;
+                            int escala = (double)width/(double)height;
+                            if(ESCALA != escala){
+                                if(escala>ESCALA){
+                                    height = (1.f / ESCALA)* width;
+                                }
+                                else{
+                                    width = ESCALA * height;
+                                }
+                                printf("Definindo tamanho de tela para %d:%d, na escala: %f\n", 
+                                    width, height, (double)width/(double)height);
+                            }
+                            SCREEN_WIDTH = width;
+                            SCREEN_HEIGHT = height;
+                            SDL_SetWindowSize(window,width,height);
+                            break;                    
+
+                        }
+                        break;
+                        */
+                }
+                //fim event loop
+                //colisao com "janela"
+                /*
+                if(rectPlayer.y + rectPlayer.h >= SCREEN_HEIGHT){
+                    desce=0;
+                }
+                if(rectPlayer.y <= 0){
+                    sobe=0;
+                }
+                if(rectPlayer.x+rectPlayer.w >= SCREEN_WIDTH){
+                    direita=0;
+                }
+                if(rectPlayer.x <= 0){
+                    esquerda=0;
+                }
+                */
+                if(rectBackground.y -rectPlayerSprite.h >= SCREEN_HEIGHT*5){
+                    desce=0;
+                }
+                if(rectBackground.y <= 0){
+                    sobe=0;
+                }
+                if(rectBackground.x + rectPlayerSprite.w>= SCREEN_WIDTH*5){
+                    direita=0;
+                }
+                if(rectBackground.x <= 0){
+                    esquerda=0;
+                }
+                //fim colisao com janela
+                //colisao player com outro rect
+                if(rectPlayer.x+rectPlayer.w>=rectEnemy1.x &&
+                rectPlayer.y < rectEnemy1.y +rectEnemy1.h &&
+                rectPlayer.y + rectPlayer.h > rectEnemy1.y &&
+                rectPlayer.x < rectEnemy1.x + rectEnemy1.w             
+                ){
+                    direita=0;
+                }
+                if(rectPlayer.y <= rectEnemy1.y + rectEnemy1.h &&
+                rectPlayer.x+rectPlayer.w>rectEnemy1.x &&
+                rectPlayer.x < rectEnemy1.x + rectEnemy1.w 
+                ){
+                    sobe=0;
+                }
+                if(rectPlayer.x <= rectEnemy1.x + rectEnemy1.w &&
+                rectPlayer.y < rectEnemy1.y + rectEnemy1.h &&
+                rectPlayer.y + rectPlayer.h > rectEnemy1.y
+                        
+                ){
+                    esquerda=0;
+                }
+                if(rectPlayer.y+rectPlayer.h>=rectEnemy1.y &&
+                rectPlayer.y + rectPlayer.h >= rectEnemy1.y &&
+                rectPlayer.x < rectEnemy1.x + rectEnemy1.w &&
+                rectPlayer.x + rectPlayer.w > rectEnemy1.x
+                ){
+                    desce=0;
+                }
+                //fim colisao de player com outro rect
+
+
+
+
+
+
+                //fim colisao rect
+                //locomocao/sprite player
+                frameTimeSprite = SDL_GetTicks() - framestart;
+                if(sobe==1){
+                    //rectPlayer.y -=speedPlayer;
+                    rectBackground.y -=speedPlayer;
+                    rectPlayerSprite.y = 0;
+                    if(rectPlayerSprite.x <=66){
+                        rectPlayerSprite.x += 33;
+                    }
+                    if(rectPlayerSprite.x>66){
+                        rectPlayerSprite.x = 0; 
+                    }
+                    if(framedelay > frameTime){
+                        //SDL_Delay((framedelay) - frameTimeSprite);
+                    }
+                }
+                else if(desce==1){
+                    //rectPlayer.y +=speedPlayer;
+                    rectBackground.y +=speedPlayer;
+                    rectPlayerSprite.y = 72;
+                    if(rectPlayerSprite.x <=66){
+                        rectPlayerSprite.x += 33;
+                    }
+                    if(rectPlayerSprite.x>66){
+                        rectPlayerSprite.x = 0; 
+                    }
+                    if(framedelay > frameTime){
+                        //SDL_Delay((framedelay) - frameTimeSprite);
+                    }
+                }
+                else if(esquerda==1){
+                    //rectPlayer.x -=speedPlayer;
+                    rectBackground.x -=speedPlayer;
+                    rectPlayerSprite.y = 108;
+                    if(rectPlayerSprite.x <=66){
+                        rectPlayerSprite.x += 33;
+                    }
+                    if(rectPlayerSprite.x>66){
+                        rectPlayerSprite.x = 0; 
+                    }
+                    if(framedelay > frameTime){
+                        //SDL_Delay((framedelay) - frameTimeSprite);
+                    }
+                }
+                else if(direita==1){
+                    //rectPlayer.x +=speedPlayer;
+                    rectBackground.x +=speedPlayer;
+                    rectPlayerSprite.y = 36;
+                    if(rectPlayerSprite.x <=66){
+                        rectPlayerSprite.x += 33;
+                    }
+                    if(rectPlayerSprite.x>66){
+                        rectPlayerSprite.x = 0; 
+                    }
+                    if(framedelay > frameTime){
+                        //SDL_Delay((framedelay) - frameTimeSprite);
+                    }
+                }
+                //fim locomocao
+
                 
 
-        }     
- 
-    }
+
+
+
+
+
+                frameTime = SDL_GetTicks() - framestart;
+                SDL_RenderClear(render);
+                SDL_RenderCopy(render, texBACKGROUND, &rectBackground, NULL);
+                SDL_RenderCopy(render, texturePlayer, &rectPlayerSprite, &rectPlayer);
+                SDL_RenderCopy(render, texEnemy, &spriteEnemy, &rectEnemy1);
+                SDL_RenderCopy(render, texEnemy2, NULL, &rectEnemy2);
+                SDL_RenderPresent(render);
+                if(framedelay > frameTime){
+                    SDL_Delay((framedelay) - frameTime);
+                }
+                
+                    
+
+            }     
     
-    SDL_FreeSurface(surfPlayer);
-    SDL_DestroyTexture(texturePlayer);
-    SDL_DestroyTexture(texEnemy);
-    SDL_DestroyTexture(texEnemy2);
-    SDL_FreeSurface(surfBACKGROUND);
-    SDL_DestroyTexture(texBACKGROUND);
-    SDL_DestroyRenderer(render);
+        }
+    }
+        SDL_FreeSurface(surfPlayer);
+        SDL_FreeSurface(surfBACKGROUND);
+        //SDL_FreeSurface(surfMENU);
+        SDL_FreeSurface(surfEnemy2);
+        SDL_FreeSurface(surfEnemy);
+        SDL_DestroyTexture(texturePlayer);
+        SDL_DestroyTexture(texBACKGROUND);
+        //SDL_DestroyTexture(texMENU);
+        SDL_DestroyTexture(texEnemy);
+        SDL_DestroyTexture(texEnemy2);
+        SDL_DestroyRenderer(render);
+        
     
     
 	finalizar();
@@ -424,7 +535,7 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou o SDL\n");
-        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE | SDL_RENDERER_PRESENTVSYNC | SDL_WINDOW_MAXIMIZED /*| SDL_WINDOW_FULLSCREEN_DESKTOP*/;
+        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE | SDL_RENDERER_PRESENTVSYNC /* | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN_DESKTOP*/;
         window = SDL_CreateWindow(version, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, flagsCreateWindow );
         if(window == NULL){
             printf("Deu merda na janela! SDL_Error: %s\n", SDL_GetError());
@@ -477,6 +588,18 @@ int startAudio(){
         return 1;
     }
     return 0;
+}
+void startmusicMenu(){
+    printf("Toca Menu\n");
+    //salva musica para carregar/tocar depois
+    Mix_Chunk *musicMenu = Mix_LoadWAV("recursos/musicMenu.mp3");
+    if(musicMenu==NULL){
+        printf("erro musicMenu: %s\n", Mix_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+    }
+    Mix_Volume(-1,MIX_MAX_VOLUME/2);
+    Mix_PlayChannel(-1,musicMenu,-1);
 }
 
 int startRenderer(){
