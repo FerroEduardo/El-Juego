@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.13" 
+#define version "0.0.14" 
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -37,7 +37,7 @@ const int LEVEL_HEIGHT = 720;
 #define speedPlayer 10
 #define FPS 30
 #define framedelay 1000/FPS
-#define cutdelay 100
+#define cutdelay 150
 
 //variaveis globais
 SDL_Window *window = NULL;
@@ -198,7 +198,15 @@ int main(int argc, char* args[]){
     
     
     //-----------------
-    
+    SDL_Surface *surfSprite = IMG_Load("recursos/8xCUTSCENE.png");
+    SDL_Texture *texSprite = SDL_CreateTextureFromSurface(render, surfSprite);
+    SDL_Rect rectScene;
+    rectScene.x = 0;
+    rectScene.y = 0;
+    rectScene.h = SCREEN_HEIGHT;
+    rectScene.w = SCREEN_WIDTH;
+    SDL_Surface *screen = NULL;
+    SDL_Rect recorte = { 0 , 0, 258, 146};
     
     
 
@@ -282,10 +290,36 @@ int main(int argc, char* args[]){
             }
         }
 
-
-
-
         else if(statusGame==1){
+            framestart = SDL_GetTicks();
+                if(recorte.x<=7998 && recorte.y == 0){
+                    recorte.x += 258;
+                    if(recorte.x>7998){
+                        recorte.x = 0;
+                        recorte.y += 146;
+                    }
+                }
+                else if(recorte.y == 146){
+                    recorte.x += 258;
+                }
+                if(recorte.x >= 7998 && recorte.y == 146){
+                        statusGame = 2;
+                        SDL_DestroyTexture(texSprite);
+                }
+            
+            
+            
+            frameTime = SDL_GetTicks() - framestart;
+            SDL_RenderClear(render);
+            SDL_RenderCopy(render, texSprite, &recorte, &rectScene);
+            SDL_RenderPresent(render);
+            if(framedelay > frameTime){
+                SDL_Delay((cutdelay) - frameTime);
+            }
+        }
+
+
+        else if(statusGame==2){
             framestart = SDL_GetTicks();
             while (SDL_PollEvent(&evento)){                
                 switch (evento.type){
