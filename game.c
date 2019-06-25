@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.15" 
+#define version "0.0.16" 
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -52,7 +52,7 @@ int finalizar();
 void nobreu();
 int startAudio();
 int startRenderer();
-void startmusicMenu();
+Mix_Chunk startmusicMenu();
 
 int statusGame=0;
 /*
@@ -216,10 +216,13 @@ int main(int argc, char* args[]){
         
     uint32_t framestart;
     uint32_t frameTime,frameTimeSprite;
-    int startMMenu=0;
+    int startMMenu=0,startMCutscene=0;
     startAudio();
     //nobreu();
     Mix_Chunk *bomba = Mix_LoadWAV("recursos/bomba.mp3");
+    Mix_VolumeChunk(bomba,MIX_MAX_VOLUME/4);
+    Mix_Chunk *teclado = Mix_LoadWAV("recursos/teclado.mp3");
+    Mix_VolumeChunk(teclado,MIX_MAX_VOLUME);
     //animation loop
     printf("Iniciou o JOGO\n");
     time_t timeStart= time(NULL);
@@ -250,6 +253,7 @@ int main(int argc, char* args[]){
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
                                 printf("Inicia CUTSCENE\n");
+                                SDL_Delay(250);
                                 statusGame=1;
                                 break;
                             case SDLK_2:
@@ -257,6 +261,7 @@ int main(int argc, char* args[]){
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
                                 printf("Inicia CUTSCENE\n");
+                                SDL_Delay(250);
                                 statusGame=1;
                                 break;
                             case SDLK_3:
@@ -264,16 +269,19 @@ int main(int argc, char* args[]){
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
                                 printf("Inicia CUTSCENE\n");
+                                SDL_Delay(250);
                                 statusGame=1;
                                 break;
                             case SDLK_4:
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
+                                printf("Fechar JOGO\n");
                                 close_requested = 1;
                                 break;
                             case SDLK_END:
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
+                                printf("Fechar JOGO\n");
                                 close_requested = 1;
                                 break;
                         }
@@ -296,6 +304,10 @@ int main(int argc, char* args[]){
         else if(statusGame==1){
             
             framestart = SDL_GetTicks();
+            if(startMCutscene==0){
+                Mix_PlayChannel(4,teclado,1);
+                ++startMCutscene;
+            }
                 if(recorte.x<=7998 && recorte.y == 0){
                     recorte.x += 258;
                     if(recorte.x>7998){
@@ -307,12 +319,19 @@ int main(int argc, char* args[]){
                     recorte.x += 258;
                 }
                 if(recorte.x >= 4902 && recorte.y == 146){
-                    Mix_PlayChannel(-1,bomba,1);
+                    if(startMCutscene==1){
+                        Mix_FadeOutChannel(4,1);
+                        Mix_PlayChannel(1,bomba,1);
+                        startMCutscene++;
+                    }
                 }
                 if(recorte.x >= 7998 && recorte.y == 146){
                     Mix_FadeOutChannel(-1, 1000);
                     SDL_FreeSurface(surfSprite);
                     SDL_DestroyTexture(texSprite);
+                    Mix_CloseAudio();
+                    startAudio();
+                    SDL_Delay(500);
                     printf("Inicia JOGO\n");
                     statusGame = 2;
                 }
@@ -625,7 +644,7 @@ void nobreu(){
 int startAudio(){
     //inicia "driver" de audio
     printf("Iniciou AUDIO\n");
-    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024);
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 5, 1024);
     if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024)==-1) {
         printf("Merda no Mix_OpenAudio: %s\n", Mix_GetError());
         SDL_DestroyWindow(window);
@@ -634,7 +653,7 @@ int startAudio(){
     }
     return 0;
 }
-void startmusicMenu(){
+Mix_Chunk startmusicMenu(){
     printf("Toca Menu\n");
     //salva musica para carregar/tocar depois
     Mix_Chunk *musicMenu = Mix_LoadWAV("recursos/musicMenu.mp3");
@@ -645,6 +664,7 @@ void startmusicMenu(){
     }
     Mix_Volume(-1,MIX_MAX_VOLUME/2);
     Mix_PlayChannel(-1,musicMenu,-1);
+    return *musicMenu;
 }
 
 int startRenderer(){
