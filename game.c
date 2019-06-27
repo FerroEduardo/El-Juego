@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.17" 
+#define version "0.0.18" 
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -33,12 +33,11 @@ const int LEVEL_HEIGHT = 720;
 int i;
 
 //speed in pixels/second
-#define SCROLL_SPEED 300
 #define SPEED 300
 
-#define speedPlayer 100
+#define speedPlayer 10
 #define FPS 23
-#define framedelay 1000/FPS
+#define framedelay 60
 #define cutdelay 150
 
 #define mapx 7680
@@ -98,10 +97,12 @@ int main(int argc, char* args[]){
         return 1;
     }
     SDL_Rect rectPlayer;
-    rectPlayer.x = (SCREEN_WIDTH/2)   + (rectPlayer.w/2);
-    rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
+    //rectPlayer.x = (SCREEN_WIDTH/2)   + (rectPlayer.w/2);
+    //rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
     rectPlayer.w = 110;
     rectPlayer.h = 120;
+    rectPlayer.x = (SCREEN_WIDTH/2)   - (rectPlayer.w/2);
+    rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
 
     
     SDL_Rect rectPlayerSprite = {0,72,33,36};
@@ -114,7 +115,7 @@ int main(int argc, char* args[]){
     //BACKGROUND-----------
     SDL_Surface *surfBACKGROUND = IMG_Load("recursos/grande.png");
     SDL_Texture *texBACKGROUND = SDL_CreateTextureFromSurface(render, surfBACKGROUND);
-    SDL_Rect rectBackground = {(SCREEN_WIDTH/2)   + (rectPlayer.w/2),1000,SCREEN_WIDTH,SCREEN_HEIGHT};
+    SDL_Rect rectBackground = {(SCREEN_WIDTH/2)   + (rectPlayer.w/2),(SCREEN_HEIGHT /2) - (rectPlayer.h/2),SCREEN_WIDTH,SCREEN_HEIGHT};
 
     //MENU-------------------
     SDL_Surface *surfMENU = IMG_Load("recursos/menu.png");
@@ -140,18 +141,13 @@ int main(int argc, char* args[]){
     surfEnemies[1] = IMG_Load("recursos/enemy2.png");
     texEnemies[1] = SDL_CreateTextureFromSurface(render, surfEnemies[1]);
     rectEnemies[1].x = 300; rectEnemies[1].y = 200; rectEnemies[1].w = 100; rectEnemies[1].h = 100;
-    //spriteEnemies[1] = {0,0,0,0};
-    
+    spriteEnemies[1].x = 0;spriteEnemies[1].y = 0; spriteEnemies[1].w = 400; spriteEnemies[1].h = 400;
+
     
     //-----------------
     SDL_Surface *surfScene = IMG_Load("recursos/8xCUTSCENE.png");
     SDL_Texture *texScene = SDL_CreateTextureFromSurface(render, surfScene);
-    SDL_Rect rectScene;
-    rectScene.x = 0;
-    rectScene.y = 0;
-    rectScene.h = SCREEN_HEIGHT;
-    rectScene.w = SCREEN_WIDTH;
-    //SDL_Surface *screen = NULL;
+    SDL_Rect rectScene = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
     SDL_Rect recorte = { 0 , 0, 258, 146};
     
     
@@ -228,6 +224,7 @@ int main(int argc, char* args[]){
                                 SDL_FreeSurface(surfMENU);
                                 SDL_DestroyTexture(texMENU);
                                 printf("Fechar JOGO\n");
+                                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Obrigado", "Obrigado por não jogar o jogo", window);
                                 close_requested = 1;
                                 break;
                             case SDLK_0:
@@ -491,8 +488,7 @@ int main(int argc, char* args[]){
                 SDL_RenderCopy(render, texBACKGROUND, &rectBackground, NULL);
                 SDL_RenderCopy(render, texturePlayer, &rectPlayerSprite, &rectPlayer);
                 for(i=0;i<nEnemies;i++){
-                    SDL_RenderCopy(render, texEnemies[i], NULL, &rectEnemies[i]);
-                    //SDL_RenderCopy(render, texEnemies[i], &spriteEnemies[i], &rectEnemies[i]);
+                    SDL_RenderCopy(render, texEnemies[i], &spriteEnemies[i], &rectEnemies[i]);
                 }
                 SDL_RenderPresent(render);
                 if(framedelay > frameTime){
@@ -517,7 +513,10 @@ int main(int argc, char* args[]){
     
     time_t timeStop= time(NULL);
     int timeOpened = difftime(timeStop,timeStart);
-    printf("FICOU ABERTO %d segundos\n", timeOpened);
+    char tempo[50];
+    sprintf(tempo,"Você jogou por %d segundos",timeOpened);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Tempo Aberto", tempo,  window);
+    //printf("FICOU ABERTO %d segundos\n", timeOpened);
 	finalizar();
     return 0;
 }
@@ -534,13 +533,15 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou o SDL\n");
-        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE | SDL_RENDERER_PRESENTVSYNC /* | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN_DESKTOP*/;
+        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN /*| SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE */| SDL_RENDERER_PRESENTVSYNC /* | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN_DESKTOP*/;
         window = SDL_CreateWindow(version, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, flagsCreateWindow );
         if(window == NULL){
             printf("Deu merda na janela! SDL_Error: %s\n", SDL_GetError());
             SDL_Quit();
             return 1;
         }
+        SDL_Surface *surfIcon = IMG_Load("recursos/icon.png");
+        SDL_SetWindowIcon(window,surfIcon);
         printf("Iniciou a JANELA\n");
         return 0;
 }
