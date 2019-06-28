@@ -8,7 +8,7 @@
 
 
 //VERSÃO
-#define version "0.0.18" 
+#define version "v0.0.19" 
 //gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -lm -Wall customlib.h -Wno-switch 
 //-Wno-switch remove todos os warns relacionados ao Wswitch
 //compila e abre se nao tiver erro
@@ -69,10 +69,11 @@ So a surface is in regular memory, and a texture is in this separate VRAM.
 
 int main(int argc, char* args[]){ 
     int sobe, desce, esquerda,direita;
+    int enemyMove;
     SDL_Surface *surfEnemies[nEnemies];
     SDL_Texture *texEnemies[nEnemies];
     SDL_Rect rectEnemies[nEnemies];
-    SDL_Rect spriteEnemies[nEnemies];
+    SDL_Rect rectspriteEnemies[nEnemies];
 
 
     inicializar();  
@@ -133,15 +134,15 @@ int main(int argc, char* args[]){
     surfEnemies[0] = IMG_Load("recursos/mage_f.png");
     texEnemies[0] = SDL_CreateTextureFromSurface(render, surfEnemies[0]);
     rectEnemies[0].x = 900; rectEnemies[0].y = 160; rectEnemies[0].w = 110; rectEnemies[0].h = 120;
-    spriteEnemies[0].x = 0;spriteEnemies[0].y = 72; spriteEnemies[0].w = 33; spriteEnemies[0].h = 36;
+    rectspriteEnemies[0].x = 0;rectspriteEnemies[0].y = 72; rectspriteEnemies[0].w = 33; rectspriteEnemies[0].h = 36;
     //+22
     
     //-----------------
     //enemy2-----------
-    surfEnemies[1] = IMG_Load("recursos/enemy2.png");
+    surfEnemies[1] = IMG_Load("recursos/healer_f.png");
     texEnemies[1] = SDL_CreateTextureFromSurface(render, surfEnemies[1]);
     rectEnemies[1].x = 300; rectEnemies[1].y = 200; rectEnemies[1].w = 100; rectEnemies[1].h = 100;
-    spriteEnemies[1].x = 0;spriteEnemies[1].y = 0; spriteEnemies[1].w = 400; spriteEnemies[1].h = 400;
+    rectspriteEnemies[1].x = 0;rectspriteEnemies[1].y = 72; rectspriteEnemies[1].w = 33; rectspriteEnemies[1].h = 36;
 
     
     //-----------------
@@ -381,7 +382,6 @@ int main(int argc, char* args[]){
                 }
                 //fim event loop
                 //colisao com "janela"
-                
                 if(rectBackground.y + rectBackground.h + speedPlayer >= mapy){
                     desce=0;
                 }
@@ -415,6 +415,9 @@ int main(int argc, char* args[]){
                 //locomocao/sprite player
                 frameTimeSprite = SDL_GetTicks() - framestart;
                 if(sobe==1){
+                    for(i=0;i<nEnemies;i++){
+                        rectEnemies[i].y += speedPlayer;
+                    }
                     //rectPlayer.y -=speedPlayer;
                     rectPlayerPosMap.y -=speedPlayer;
                     rectBackground.y -=speedPlayer;
@@ -430,6 +433,9 @@ int main(int argc, char* args[]){
                     }
                 }
                 else if(desce==1){
+                    for(i=0;i<nEnemies;i++){
+                        rectEnemies[i].y -= speedPlayer;
+                    }
                     //rectPlayer.y +=speedPlayer;
                     rectPlayerPosMap.y +=speedPlayer;
                     rectBackground.y +=speedPlayer;
@@ -445,6 +451,9 @@ int main(int argc, char* args[]){
                     }
                 }
                 else if(esquerda==1){
+                    for(i=0;i<nEnemies;i++){
+                        rectEnemies[i].x += speedPlayer;
+                    }
                     //rectPlayer.x -=speedPlayer;
                     rectPlayerPosMap.x -=speedPlayer;
                     rectBackground.x -=speedPlayer;
@@ -460,6 +469,9 @@ int main(int argc, char* args[]){
                     }
                 }
                 else if(direita==1){
+                    for(i=0;i<nEnemies;i++){
+                        rectEnemies[i].x -= speedPlayer;
+                    }
                     //rectPlayer.x +=speedPlayer;
                     rectPlayerPosMap.x +=speedPlayer;
                     rectBackground.x +=speedPlayer;
@@ -475,6 +487,71 @@ int main(int argc, char* args[]){
                     }
                 }
                 //fim locomocao
+                //inicio enemy move, 50% andar 50% parado
+                for(i=0;i<nEnemies;i++){
+                    enemyMove = rand() % 16+1;
+                    if(enemyMove==1){
+                        //direita
+                        rectEnemies[i].x +=speedPlayer;
+                        rectspriteEnemies[i].y = 36;
+                        if(rectspriteEnemies[i].x <=66){
+                            rectspriteEnemies[i].x += 33;
+                        }
+                        if(rectspriteEnemies[i].x>66){
+                            rectspriteEnemies[i].x = 0; 
+                        }
+                        if(framedelay > frameTime){
+                            SDL_Delay((framedelay) - frameTimeSprite);
+                        }
+                    }
+                    if(enemyMove==2){
+                        //esquerda
+                        rectEnemies[i].x -=speedPlayer;
+
+                        rectspriteEnemies[i].y = 108;
+                        if(rectspriteEnemies[i].x <=66){
+                            rectspriteEnemies[i].x += 33;
+                        }
+                        if(rectspriteEnemies[i].x>66){
+                            rectspriteEnemies[i].x = 0; 
+                        }
+                        if(framedelay > frameTime){
+                            SDL_Delay((framedelay) - frameTimeSprite);
+                        }
+                    }
+                    if(enemyMove==3){
+                        //desce
+                        rectEnemies[i].y +=speedPlayer;
+                        rectspriteEnemies[i].y = 72;
+                        if(rectspriteEnemies[i].x <=66){
+                            rectspriteEnemies[i].x += 33;
+                        }
+                        if(rectspriteEnemies[i].x>66){
+                            rectspriteEnemies[i].x = 0;
+                        }
+                        if(framedelay > frameTime){
+                            SDL_Delay((framedelay) - frameTimeSprite);
+                        }
+                        
+                    }
+                    if(enemyMove==4){
+                        //sobe
+                        rectEnemies[i].y -=speedPlayer;
+                        rectspriteEnemies[i].y = 0;
+                        if(rectspriteEnemies[i].x <=66){
+                            rectspriteEnemies[i].x += 33;
+                        }
+                        if(rectspriteEnemies[i].x>66){
+                            rectspriteEnemies[i].x = 0; 
+                        }
+                        if(framedelay > frameTime){
+                            SDL_Delay((framedelay) - frameTimeSprite);
+                        }
+                        
+                        
+                    }
+                }
+                //--------------------------------------
 
                 
 
@@ -488,7 +565,7 @@ int main(int argc, char* args[]){
                 SDL_RenderCopy(render, texBACKGROUND, &rectBackground, NULL);
                 SDL_RenderCopy(render, texturePlayer, &rectPlayerSprite, &rectPlayer);
                 for(i=0;i<nEnemies;i++){
-                    SDL_RenderCopy(render, texEnemies[i], &spriteEnemies[i], &rectEnemies[i]);
+                    SDL_RenderCopy(render, texEnemies[i], &rectspriteEnemies[i], &rectEnemies[i]);
                 }
                 SDL_RenderPresent(render);
                 if(framedelay > frameTime){
@@ -515,7 +592,7 @@ int main(int argc, char* args[]){
     int timeOpened = difftime(timeStop,timeStart);
     char tempo[50];
     sprintf(tempo,"Você jogou por %d segundos",timeOpened);
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Tempo Aberto", tempo,  window);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, version, tempo,  window);
     //printf("FICOU ABERTO %d segundos\n", timeOpened);
 	finalizar();
     return 0;
