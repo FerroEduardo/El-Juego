@@ -1,0 +1,58 @@
+/*
+CRIAR SURFACE E TEXTURE
+    SDL_Surface *[surfNAME] = IMG_Load("[surfLOCATION]");
+    if([surfNAME]==NULL){
+        printf("Deu merda ao criar [surfNAME]! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }    
+    SDL_Texture *[texNAME] = SDL_CreateTextureFromSurface(render, [surfNAME]);
+    //SDL_FreeSurface([surfNAME]);
+    if([texNAME]==NULL){
+        printf("Deu merda ao criar [texNAME]! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(render);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+    SDL_Rect [rectNAME];
+    /*
+    [rectNAME].w = 100;
+    [rectNAME].h = 100;
+    [rectNAME].x = 100;
+    [rectNAME].y = 190;
+    */
+*/
+/*
+    //colisao player com outro rect
+    if(rectPlayer.x+rectPlayer.w>=[rectEnemyname]1.x &&
+    rectPlayer.y < [rectEnemyname]1.y +[rectEnemyname]1.h &&
+    rectPlayer.y + rectPlayer.h > [rectEnemyname]1.y &&
+    rectPlayer.x < [rectEnemyname]1.x + [rectEnemyname]1.w             
+    ){
+        direita=0;
+    }
+    if(rectPlayer.y <= [rectEnemyname]1.y + [rectEnemyname]1.h &&
+    rectPlayer.x+rectPlayer.w>[rectEnemyname]1.x &&
+    rectPlayer.x < [rectEnemyname]1.x + [rectEnemyname]1.w 
+    ){
+        sobe=0;
+    }
+    if(rectPlayer.x <= [rectEnemyname]1.x + [rectEnemyname]1.w &&
+    rectPlayer.y < [rectEnemyname]1.y + [rectEnemyname]1.h &&
+    rectPlayer.y + rectPlayer.h > [rectEnemyname]1.y
+                
+    ){
+        esquerda=0;
+    }
+    if(rectPlayer.y+rectPlayer.h>=[rectEnemyname]1.y &&
+    rectPlayer.y + rectPlayer.h >= [rectEnemyname]1.y &&
+    rectPlayer.x < [rectEnemyname]1.x + [rectEnemyname]1.w &&
+    rectPlayer.x + rectPlayer.w > [rectEnemyname]1.x
+    ){
+        desce=0;
+    }
+    //fim colisao de player com outro rect
+*/
