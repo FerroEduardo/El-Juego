@@ -43,6 +43,8 @@ int i;
 #define cutdelay 150
 #define cutdelay2 500
 
+#define timeToClose 180
+
 #define mapx 7680
 #define mapy 4320
 
@@ -214,7 +216,6 @@ int main(int argc, char* args[]){
     uint32_t frameTime,frameTimeSprite,frameTimeSpriteAtack;
     int startMMenu=0,startMCutscene=0;
     startAudio();
-    //nobreu();
     Mix_Chunk *bomba = Mix_LoadWAV("recursos/bomba.mp3");
     Mix_VolumeChunk(bomba,MIX_MAX_VOLUME/4);
     Mix_Chunk *teclado = Mix_LoadWAV("recursos/teclado.mp3");
@@ -433,7 +434,7 @@ int main(int argc, char* args[]){
         else if(statusGame==3){
             timePresent=time(NULL);
             printf("tempo atual %ld ",timePresent-EAPLAN);
-            if(timePresent-EAPLAN>=45){
+            if(timePresent-EAPLAN>=timeToClose){
                 statusGame=5;
             }
             //SDL_Rect rectPlayerPosMap = { rectPlayer.x-rectBackground.x, rectPlayer.y-rectBackground.y, rectPlayer.w, rectPlayer.h};
@@ -482,32 +483,7 @@ int main(int argc, char* args[]){
                                 break;
                         }
                         break;
-                }//retirar esse caso usar o de baixo
-                    /*
-                    case SDL_WINDOWEVENT:
-                        switch (evento.window.event){
-                        case SDL_WINDOWEVENT_RESIZED:
-                            width = evento.window.data1;
-                            height = evento.window.data2;
-                            int escala = (double)width/(double)height;
-                            if(ESCALA != escala){
-                                if(escala>ESCALA){
-                                    height = (1.f / ESCALA)* width;
-                                }
-                                else{
-                                    width = ESCALA * height;
-                                }
-                                printf("Definindo tamanho de tela para %d:%d, na escala: %f\n", 
-                                    width, height, (double)width/(double)height);
-                            }
-                            SCREEN_WIDTH = width;
-                            SCREEN_HEIGHT = height;
-                            SDL_SetWindowSize(window,width,height);
-                            break;                    
-
-                        }
-                        break;
-                        */
+                }
                 }
                 //fim event loop
                 //colisao com "janela"
@@ -528,16 +504,8 @@ int main(int argc, char* args[]){
                 //fim colisao com janela
                 //colisao player com outro rect
                 
-                
-
-
-
 
                 //fim colisao de player com outro rect
-
-
-
-
 
 
                 //fim colisao rect
@@ -792,7 +760,7 @@ int inicializar(){
             return 1;
         }
         printf("Iniciou o SDL\n");
-        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN /*| SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_RESIZABLE */| SDL_RENDERER_PRESENTVSYNC /* | SDL_WINDOW_MAXIMIZED*/ | SDL_WINDOW_FULLSCREEN_DESKTOP;
+        Uint32 flagsCreateWindow = SDL_WINDOW_SHOWN | SDL_RENDERER_PRESENTVSYNC /* | SDL_WINDOW_MAXIMIZED*/ | SDL_WINDOW_FULLSCREEN_DESKTOP;
         window = SDL_CreateWindow(version, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, flagsCreateWindow );
         if(window == NULL){
             printf("Deu merda na janela! SDL_Error: %s\n", SDL_GetError());
@@ -814,26 +782,6 @@ int finalizar(){
 	//Quit SDL(subsystems)
 	SDL_Quit();
     return 0;
-}
-
-void nobreu(){
-    printf("Toca PEGA NO BREU\n");
-    //salva musica para carregar/tocar depois
-    Mix_Chunk *nobreu = Mix_LoadWAV("recursos/nobreu.mp3");
-    Mix_Chunk *vucvuc = Mix_LoadWAV("recursos/vucvuc.mp3");
-    if(nobreu==NULL){
-        printf("erro NOBREU: %s\n", Mix_GetError());
-    }
-    //volume da faixa, "-1" muda o volume de todos os canais
-    Mix_Volume(-1,MIX_MAX_VOLUME/20);
-    //"-1" toca faixa no prox canal disponivel
-    srand (time(NULL));
-    int music0 = ((rand()) % 2);
-    if(music0==1)
-        Mix_PlayChannel(-1,nobreu,-1);    
-    else if(music0==0)
-        Mix_PlayChannel(-1,vucvuc,-1);   
-
 }
 
 int startAudio(){
