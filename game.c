@@ -433,12 +433,12 @@ int main(int argc, char* args[]){
 
         else if(statusGame==3){
             timePresent=time(NULL);
-            printf("tempo atual %ld ",timePresent-EAPLAN);
+            //printf("tempo atual %ld ",timePresent-EAPLAN);
             if(timePresent-EAPLAN>=timeToClose){
                 statusGame=5;
             }
             //SDL_Rect rectPlayerPosMap = { rectPlayer.x-rectBackground.x, rectPlayer.y-rectBackground.y, rectPlayer.w, rectPlayer.h};
-            printf("X GLOBAL: %d, Y GLOBAL: %d\n", rectPlayerPosMap.x,rectPlayerPosMap.y);
+            //printf("X GLOBAL: %d, Y GLOBAL: %d\n", rectPlayerPosMap.x,rectPlayerPosMap.y);
             framestart = SDL_GetTicks();
             while (SDL_PollEvent(&evento)){                
                 switch (evento.type){
@@ -463,6 +463,9 @@ int main(int argc, char* args[]){
                                 break;
                             case SDLK_END:
                                 close_requested = 1;
+                                break;
+                            case SDLK_j:
+                                statusGame=5;
                                 break;
                         }
                     break;
