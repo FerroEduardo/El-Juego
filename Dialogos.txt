@@ -1,0 +1,12 @@
+Magostart:
+    (texto centralizado)
+    Bruxa:
+        Você parece novo aqui.
+    Bruxa:
+        Então, um ser desconhecido esta prestes a destruir nossa vila/cidade/regiao
+    Bruxa:
+        e você parece ser capaz de derrota-lo.
+    Bruxa:
+        Você parece não falar muito. De qualquer forma,
+    Bruxa:
+        siga as setas que encontrar e chegara ao seu destino.

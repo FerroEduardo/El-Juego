@@ -5,6 +5,7 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_mixer.h"
+#include "SDL2/SDL_ttf.h"
 //#include "customlib.h"
 
 
@@ -46,6 +47,8 @@ double speedPlayer = 10;
 #define mapy 4320
 
 #define nEnemies 5
+#define nBalao1 0
+#define nBalao2 1
 
 //variaveis globais
 SDL_Window *window = NULL;
@@ -73,6 +76,7 @@ void nobreu();
 int startAudio();
 int startRenderer();
 int colisao(SDL_Rect,SDL_Rect);
+SDL_Rect matarEnemy(SDL_Rect*,int );
 Mix_Chunk startmusicMenu();
 
 
@@ -83,13 +87,19 @@ So a surface is in regular memory, and a texture is in this separate VRAM.
 */
 
 int main(int argc, char* args[]){
-    int statusGame=0;
+    int statusGame=0,mageStatus=0;
     int sobe=false, desce=false, esquerda=false,direita=false,atacar=0,lastside,statusRank=0,statusCreditos=0;
-    int enemyMove=-1,enemyMoveMinotaur=-1,minotaurAtack=false;
+    int enemyMove=-1,enemyMoveMinotaur=-1,minotaurAtack=false, falar_npc=false;
     SDL_Surface *surfEnemies[nEnemies];
     SDL_Texture *texEnemies[nEnemies];
     SDL_Rect rectEnemies[nEnemies];
     SDL_Rect rectspriteEnemies[nEnemies];
+    SDL_Surface *surfBALAO_01[1];
+    SDL_Texture *texBALAO_01[1];
+    SDL_Surface *surfBALAO_02[1];
+    SDL_Texture *texBALAO_02[1];
+    SDL_Rect rectBALAO_01[1];
+    SDL_Rect rectBALAO_02[1];
     int enemyColision[nEnemies][4];
     for(i=0;i<nEnemies;i++){
         enemyColision[i][0]=false;
@@ -98,7 +108,7 @@ int main(int argc, char* args[]){
         enemyColision[i][3]=false;
     }
 
-
+    SDL_StartTextInput();
     inicializar();  
     startRenderer();
     //PLAYER------------
@@ -127,15 +137,41 @@ int main(int argc, char* args[]){
     rectPlayer.h = 110;
     rectPlayer.x = (SCREEN_WIDTH/2)   - (rectPlayer.w/2);
     rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
-
-    
     SDL_Rect rectPlayerSprite = {0,0,112,112};
     
     // h/height altura
     // w/width largura
+    //---------------------
+    //MAGE START GAME
+    SDL_Surface *surfMAGE_START_Game = IMG_Load("recursos/mago_f_start.png");
+    SDL_Texture *texMAGE_START_Game = SDL_CreateTextureFromSurface(render, surfMAGE_START_Game);
+    SDL_Rect rectMAGE_START_Game = {(SCREEN_WIDTH/2)+ (rectPlayer.w/2)+50,(SCREEN_HEIGHT /2) - (rectPlayer.h/2)-50,128,172};
+    SDL_Rect rectMAGE_START_GameSprite = {0,0,32,43};
 
     //---------------------
     
+    //balao 01
+    surfBALAO_01[0] = IMG_Load("recursos/balao_1.png");
+    texBALAO_01[0] = SDL_CreateTextureFromSurface(render, surfBALAO_01[0]);
+    /* ver posicao do balao
+    rectBALAO_01[0].x = rectMAGE_START_Game.x + (rectMAGE_START_Game.w/4);
+    rectBALAO_01[0].y = rectMAGE_START_Game.y - 172 ;
+    rectBALAO_01[0].w = 64;
+    rectBALAO_01[0].h = 86;
+     */
+
+    //---------------------
+
+    //balao 02 do mago start
+    surfBALAO_02[0] = IMG_Load("recursos/balao_2.png");
+    texBALAO_02[0] = SDL_CreateTextureFromSurface(render, surfBALAO_02[0]);
+    rectBALAO_02[0].x = rectMAGE_START_Game.x + (rectMAGE_START_Game.w/3);
+    rectBALAO_02[0].y = rectMAGE_START_Game.y - 86 ;
+    rectBALAO_02[0].w = 64;
+    rectBALAO_02[0].h = 86;
+
+    //---------------------
+
     //BACKGROUND-----------
     SDL_Surface *surfBACKGROUND = IMG_Load("recursos/01_el_mapa.png");
     SDL_Texture *texBACKGROUND = SDL_CreateTextureFromSurface(render, surfBACKGROUND);
@@ -462,7 +498,7 @@ int main(int argc, char* args[]){
                 //statusGame=5;
             }
             //SDL_Rect rectPlayerPosMap = { rectPlayer.x-rectBackground.x, rectPlayer.y-rectBackground.y, rectPlayer.w, rectPlayer.h};
-            printf("X GLOBAL: %d, Y GLOBAL: %d\n", rectPlayerPosMap.x,rectPlayerPosMap.y);
+            //printf("X GLOBAL: %d, Y GLOBAL: %d\n", rectPlayerPosMap.x,rectPlayerPosMap.y);
             framestart = SDL_GetTicks();
             while (SDL_PollEvent(&evento)){                
                 switch (evento.type){
@@ -496,6 +532,9 @@ int main(int argc, char* args[]){
                             case SDLK_SPACE:
                                 atacar=1;
                                 break;
+                            case SDLK_RETURN:
+                                falar_npc=true;
+                                break;
                             case SDLK_END:
                                 close_requested = true;
                                 break;
@@ -515,6 +554,9 @@ int main(int argc, char* args[]){
                                 break;
                             case SDLK_RIGHT:
                                 direita=false;
+                                break;
+                            case SDLK_RETURN:
+                                falar_npc=false;
                                 break;
                         }
                         break;
@@ -539,14 +581,47 @@ int main(int argc, char* args[]){
                 //fim colisao com janela
                 //colisao player com outros inimigos
                 for(i=0;i<nEnemies;i++){
-                    if(colisao(rectPlayer, rectEnemies[i])==0)
+                    if(colisao(rectPlayer, rectEnemies[i])==0){
                         sobe=false;
-                    if(colisao(rectPlayer, rectEnemies[i])==1)
+                    }
+                    if(colisao(rectPlayer, rectEnemies[i])==1){
                         desce=false;
-                    if(colisao(rectPlayer, rectEnemies[i])==2)
+                    }
+                    if(colisao(rectPlayer, rectEnemies[i])==2){
                         direita=false;
-                    if(colisao(rectPlayer, rectEnemies[i])==3)
+                    }
+                    if(colisao(rectPlayer, rectEnemies[i])==3){
                         esquerda=false;
+                    }
+                    if((colisao(rectPlayer,rectMAGE_START_Game)==0||colisao(rectPlayer,rectMAGE_START_Game)==1||colisao(rectPlayer,rectMAGE_START_Game)==2||colisao(rectPlayer,rectMAGE_START_Game)==3)){
+                        if(mageStatus==0 && falar_npc==true){
+                            rectMAGE_START_GameSprite.x = 32;
+                            mageStatus=1;
+                            rectBALAO_02[0].w = 0;
+                            rectBALAO_02[0].h = 0;
+                        }
+                        else if(mageStatus==1 && falar_npc==true){
+
+                            //avancar fala
+                            
+                            
+                        }
+                        /*
+                        else if(terminou fala)
+                        fora desse loop de colisao
+                            if(rectMAGE_START_GameSprite.x >= 32){
+                                rectMAGE_START_GameSprite.x += 32;
+                                rectMAGE_START_Game.x += speedPlayer*2;
+                            }
+
+                        */
+
+                    }
+                    //sumir/matar com inimigos
+                    if(colisao(rectPlayer, rectEnemies[i])!=-1 && atacar==true){
+                        matarEnemy(&rectEnemies[i],i);
+                        
+                    }
                 }
                 //-------------------------
                 //colisao inimigos com eles mesmos
@@ -677,6 +752,13 @@ int main(int argc, char* args[]){
                     if(framedelay > frameTime){
                         SDL_Delay((framedelay) - frameTimeSprite);
                     }
+                    rectMAGE_START_Game.y += speedPlayer;
+                    for(i=0;i<nBalao1;i++){
+                        rectBALAO_01[i].y += speedPlayer;
+                    }
+                    for(i=0;i<nBalao2;i++){
+                        rectBALAO_02[i].y += speedPlayer;
+                    }
                 }
                 else if(desce==true){
                     for(i=0;i<nEnemies;i++){
@@ -693,6 +775,13 @@ int main(int argc, char* args[]){
                     }
                     if(framedelay > frameTime){
                         SDL_Delay((framedelay) - frameTimeSprite);
+                    }
+                    rectMAGE_START_Game.y -= speedPlayer;
+                    for(i=0;i<nBalao1;i++){
+                        rectBALAO_01[i].y -= speedPlayer;
+                    }
+                    for(i=0;i<nBalao2;i++){
+                        rectBALAO_02[i].y -= speedPlayer;
                     }
                 }
                 else if(esquerda==true){
@@ -711,6 +800,13 @@ int main(int argc, char* args[]){
                     if(framedelay > frameTime){
                         SDL_Delay((framedelay) - frameTimeSprite);
                     }
+                    rectMAGE_START_Game.x += speedPlayer;
+                    for(i=0;i<nBalao1;i++){
+                        rectBALAO_01[i].x += speedPlayer;
+                    }
+                    for(i=0;i<nBalao2;i++){
+                        rectBALAO_02[i].x += speedPlayer;
+                    }
                 }
                 else if(direita==true){
                     for(i=0;i<nEnemies;i++){
@@ -727,6 +823,13 @@ int main(int argc, char* args[]){
                     }
                     if(framedelay > frameTime){
                         SDL_Delay((framedelay) - frameTimeSprite);
+                    }
+                    rectMAGE_START_Game.x -= speedPlayer;
+                    for(i=0;i<nBalao1;i++){
+                        rectBALAO_01[i].x -= speedPlayer;
+                    }
+                    for(i=0;i<nBalao2;i++){
+                        rectBALAO_02[i].x -= speedPlayer;
                     }
                 }
                 //fim locomocao
@@ -827,6 +930,8 @@ int main(int argc, char* args[]){
                 SDL_RenderClear(render);
                 SDL_RenderCopy(render, texBACKGROUND, &rectBackground, NULL);
                 SDL_RenderCopy(render, texturePlayer, &rectPlayerSprite, &rectPlayer);
+                SDL_RenderCopy(render, texMAGE_START_Game, &rectMAGE_START_GameSprite, &rectMAGE_START_Game);
+                SDL_RenderCopy(render, texBALAO_02[0], NULL, &rectBALAO_02[0]);
                 for(i=0;i<nEnemies;i++){
                     SDL_RenderCopy(render, texEnemies[i], &rectspriteEnemies[i], &rectEnemies[i]);
                 }
@@ -901,6 +1006,8 @@ int main(int argc, char* args[]){
         SDL_DestroyTexture(texturePlayer);
         SDL_FreeSurface(surfBACKGROUND);
         SDL_DestroyTexture(texBACKGROUND);
+        SDL_DestroyTexture(texMAGE_START_Game);
+        SDL_FreeSurface(surfMAGE_START_Game);
         SDL_DestroyRenderer(render);
     
     time_t timeStop= time(NULL);
@@ -909,14 +1016,40 @@ int main(int argc, char* args[]){
     sprintf(tempo,"Você jogou por %d segundos",timeOpened);
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, version, tempo,  window);
     //printf("FICOU ABERTO %d segundos\n", timeOpened);
+    SDL_StopTextInput();
 	finalizar();
     return 0;
 }
+
+/*
+Magostart:
+    (texto centralizado)
+    Bruxa:
+        Você parece novo aqui.
+    Bruxa:
+        Então, um ser desconhecido esta prestes a destruir nossa vila/cidade/regiao
+    Bruxa:
+        e você parece ser capaz de derrota-lo.
+    Bruxa:
+        Você parece não falar muito. De qualquer forma,
+    Bruxa:
+        siga as setas que encontrar e chegara ao seu destino.
+
+
+
+*/
 //------------------------------------------------------------------------------------//
+
+SDL_Rect matarEnemy(SDL_Rect* enemy,int i){
+    enemy->x = 6000;
+    enemy->y = 3000;
+    printf("Matou/sumiu inimigo : %d\n", i);
+    return *enemy;
+}
 
 
 int colisao(SDL_Rect ent_1,SDL_Rect ent_2){
-    int colide;
+    int colide=-1;
     if((ent_1.y - speedPlayer <= ent_2.y + ent_2.h) && (ent_1.y + ent_1.h >= ent_2.y + ent_2.h) && ((ent_1.x >=ent_2.x && ent_1.x <= ent_2.x + ent_2.w) || (ent_1.x + ent_1.w >= ent_2.x && ent_1.x + ent_1.w <= ent_2.x + ent_2.w))){
         //sobe=0
         colide = 0;
