@@ -9,7 +9,7 @@
 
 
 //VERSÃO
-#define version "v0.1.2" 
+#define version "v0.1.3" 
 /*
     gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -Wall 
 -Wno-switch remove todos os warns relacionados ao Wswitch(n tem mais esse erro)
@@ -22,23 +22,21 @@ https://www.youtube.com/watch?v=yFLa3ln16w0
 
 //tamanho da janela
 //largura 640
-int SCREEN_WIDTH = 1280;
-int width = 1280;
+double SCREEN_WIDTH = 1280;
 //altura 480
-int SCREEN_HEIGHT = 720;
-int height = 720;
+float SCREEN_HEIGHT = 720;
 //escala 16:9
 double ESCALA = 16.f/9.f;
 
-const int LEVEL_WIDTH = 1280;
-const int LEVEL_HEIGHT = 720;
+int LEVEL_WIDTH = 1280;
+int LEVEL_HEIGHT = 720;
 
 int i,j,k;
 
 //speed in pixels/second
 #define SPEED 300
 
-#define speedPlayer 10
+double speedPlayer = 10;
 #define FPS 23
 #define framedelay 30
 #define cutdelay 150
@@ -47,7 +45,7 @@ int i,j,k;
 #define mapx 7680
 #define mapy 4320
 
-#define nEnemies 4
+#define nEnemies 5
 
 //variaveis globais
 SDL_Window *window = NULL;
@@ -86,8 +84,8 @@ So a surface is in regular memory, and a texture is in this separate VRAM.
 
 int main(int argc, char* args[]){
     int statusGame=0;
-    int sobe, desce, esquerda,direita,atacar=0,lastside,statusRank=0,statusCreditos=0;
-    int enemyMove;
+    int sobe=false, desce=false, esquerda=false,direita=false,atacar=0,lastside,statusRank=0,statusCreditos=0;
+    int enemyMove=-1,enemyMoveMinotaur=-1,minotaurAtack=false;
     SDL_Surface *surfEnemies[nEnemies];
     SDL_Texture *texEnemies[nEnemies];
     SDL_Rect rectEnemies[nEnemies];
@@ -105,7 +103,7 @@ int main(int argc, char* args[]){
     startRenderer();
     //PLAYER------------
     //carrega imagem na memoria do pc,provavelmente na RAM "mario.png"
-    SDL_Surface *surfPlayer = IMG_Load("recursos/main_character_moves.png");
+    SDL_Surface *surfPlayer = IMG_Load("recursos/player_new.png");
     if(surfPlayer==NULL){
         printf("Deu merda ao criar surfPlayer! SDL_Error: %s\n", SDL_GetError());
         SDL_DestroyRenderer(render);
@@ -125,13 +123,13 @@ int main(int argc, char* args[]){
     SDL_Rect rectPlayer;
     //rectPlayer.x = (SCREEN_WIDTH/2)   + (rectPlayer.w/2);
     //rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
-    rectPlayer.w = 60;
-    rectPlayer.h = 86;
+    rectPlayer.w = 110;
+    rectPlayer.h = 110;
     rectPlayer.x = (SCREEN_WIDTH/2)   - (rectPlayer.w/2);
     rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
 
     
-    SDL_Rect rectPlayerSprite = {56,72,28,36};
+    SDL_Rect rectPlayerSprite = {0,0,112,112};
     
     // h/height altura
     // w/width largura
@@ -139,10 +137,10 @@ int main(int argc, char* args[]){
     //---------------------
     
     //BACKGROUND-----------
-    SDL_Surface *surfBACKGROUND = IMG_Load("recursos/teste_mapa.png");
+    SDL_Surface *surfBACKGROUND = IMG_Load("recursos/01_el_mapa.png");
     SDL_Texture *texBACKGROUND = SDL_CreateTextureFromSurface(render, surfBACKGROUND);
     SDL_Rect rectBackground = {(SCREEN_WIDTH/2)   + (rectPlayer.w/2),(SCREEN_HEIGHT /2) - (rectPlayer.h/2),SCREEN_WIDTH,SCREEN_HEIGHT};
-
+    
     //RANK-----------
     SDL_Surface *surfRANK = IMG_Load("recursos/RANKS.png");
     SDL_Texture *texRANK = SDL_CreateTextureFromSurface(render, surfRANK);
@@ -207,6 +205,14 @@ int main(int argc, char* args[]){
     texEnemies[3] = SDL_CreateTextureFromSurface(render, surfEnemies[3]);
     rectEnemies[3].x = 250; rectEnemies[3].y = 900; rectEnemies[3].w = 180; rectEnemies[3].h = 141;
     rectspriteEnemies[3].x = 0;rectspriteEnemies[3].y = 94; rectspriteEnemies[3].w = 60; rectspriteEnemies[3].h = 47; 
+    //-----------------
+
+    //enemy5-----------
+    surfEnemies[4] = IMG_Load("recursos/minotauro.png");
+    texEnemies[4] = SDL_CreateTextureFromSurface(render, surfEnemies[4]);
+    rectEnemies[4].x = 1500; rectEnemies[4].y = 570; rectEnemies[4].w = 400; rectEnemies[4].h = 370;
+    rectspriteEnemies[4].x = 8;rectspriteEnemies[4].y = 154; rectspriteEnemies[4].w = 40; rectspriteEnemies[4].h = 37;
+    //50++
     //-----------------
 
 
@@ -469,15 +475,26 @@ int main(int argc, char* args[]){
                         switch (evento.key.keysym.sym){
                             case SDLK_UP:
                                 sobe=true;
+                                lastside=0;
+                                atacar=false;
                                 break;
                             case SDLK_LEFT:
                                 esquerda=true;
+                                lastside=3;
+                                atacar=false;
                                 break;
                             case SDLK_DOWN:
                                 desce=true;
+                                lastside=1;
+                                atacar=false;
                                 break;
                             case SDLK_RIGHT:
                                 direita=true;
+                                lastside=2;
+                                atacar=false;
+                                break;
+                            case SDLK_SPACE:
+                                atacar=1;
                                 break;
                             case SDLK_END:
                                 close_requested = true;
@@ -501,32 +518,7 @@ int main(int argc, char* args[]){
                                 break;
                         }
                         break;
-                }//retirar esse caso usar o de baixo
-                    /*
-                    case SDL_WINDOWEVENT:
-                        switch (evento.window.event){
-                        case SDL_WINDOWEVENT_RESIZED:
-                            width = evento.window.data1;
-                            height = evento.window.data2;
-                            int escala = (double)width/(double)height;
-                            if(ESCALA != escala){
-                                if(escala>ESCALA){
-                                    height = (1.f / ESCALA)* width;
-                                }
-                                else{
-                                    width = ESCALA * height;
-                                }
-                                printf("Definindo tamanho de tela para %d:%d, na escala: %f\n", 
-                                    width, height, (double)width/(double)height);
-                            }
-                            SCREEN_WIDTH = width;
-                            SCREEN_HEIGHT = height;
-                            SDL_SetWindowSize(window,width,height);
-                            break;                    
-
-                        }
-                        break;
-                        */
+                    }
                 }
                 //fim event loop
                 //colisao com "janela"
@@ -590,23 +582,96 @@ int main(int argc, char* args[]){
 
 
 
-
-
                 //fim colisao rect
+
+                /*
+                last side
+                sobe = 0
+                desce = 1
+                direita = 2
+                esquerda = 3
+                */
+                //inicio atacar player
+                frameTimeSpriteAtack = SDL_GetTicks() - framestart;
+                //sobe
+                if(atacar==true){
+                    //sobe
+                    if(lastside==0){
+                        rectPlayerSprite.y = 784;
+                        if(rectPlayerSprite.x <=224){
+                            rectPlayerSprite.x += 112;
+                        }
+                        if(rectPlayerSprite.x>224){
+                            rectPlayerSprite.x = 0;
+                            rectPlayerSprite.y = 336;
+                            atacar=0;
+                        }
+                        if(framedelay > frameTimeSpriteAtack){
+                            //SDL_Delay((framedelay) - frameTimeSprite);
+                        }
+                    }
+                    //desce
+                    else if(lastside==1){
+                        rectPlayerSprite.y = 448;
+                        if(rectPlayerSprite.x <=224){
+                            rectPlayerSprite.x += 112;
+                        }
+                        if(rectPlayerSprite.x>224){
+                            rectPlayerSprite.x = 0;
+                            rectPlayerSprite.y = 0;
+                            atacar=0;
+                        }
+                        if(framedelay > frameTimeSpriteAtack){
+                            //SDL_Delay((framedelay) - frameTimeSprite);
+                        }
+                    }
+                    //esquerda
+                    else if(lastside==3){
+                        rectPlayerSprite.y = 672;
+                        if(rectPlayerSprite.x <=224){
+                            rectPlayerSprite.x += 112;
+                        }
+                        if(rectPlayerSprite.x>224){
+                            rectPlayerSprite.x = 0;
+                            rectPlayerSprite.y = 112;
+                            atacar=0;
+                        }
+                        if(framedelay > frameTimeSpriteAtack){
+                            //SDL_Delay((framedelay) - frameTimeSprite);
+                        }
+                    }
+                    //direita
+                    else if(lastside==2){
+                        rectPlayerSprite.y = 560;
+                        if(rectPlayerSprite.x<=224){
+                            rectPlayerSprite.x += 112;
+                        }
+                        if(rectPlayerSprite.x>224){
+                            rectPlayerSprite.x = 0;
+                            rectPlayerSprite.y = 224;
+                            atacar=0;
+                        }
+                        if(framedelay > frameTimeSpriteAtack){
+                            //SDL_Delay((framedelay) - frameTimeSprite);
+                        }
+                    }
+                }
+                //fim atacar player
+
+
                 //locomocao/sprite player
                 frameTimeSprite = SDL_GetTicks() - framestart;
                 if(sobe==true){
                     for(i=0;i<nEnemies;i++){
                         rectEnemies[i].y += speedPlayer;
                     }
-                    //rectPlayer.y -=speedPlayer;
                     rectPlayerPosMap.y -=speedPlayer;
                     rectBackground.y -=speedPlayer;
-                    rectPlayerSprite.y = 0;
-                    if(rectPlayerSprite.x <=56){
-                        rectPlayerSprite.x += 28;
+                    rectPlayerSprite.y = 336;
+                    if(rectPlayerSprite.x <=448){
+                        rectPlayerSprite.x += 112;
                     }
-                    if(rectPlayerSprite.x>56){
+                    if(rectPlayerSprite.x>448){
                         rectPlayerSprite.x = 0; 
                     }
                     if(framedelay > frameTime){
@@ -617,14 +682,13 @@ int main(int argc, char* args[]){
                     for(i=0;i<nEnemies;i++){
                         rectEnemies[i].y -= speedPlayer;
                     }
-                    //rectPlayer.y +=speedPlayer;
                     rectPlayerPosMap.y +=speedPlayer;
                     rectBackground.y +=speedPlayer;
-                    rectPlayerSprite.y = 72;
-                    if(rectPlayerSprite.x <=56){
-                        rectPlayerSprite.x += 28;
+                    rectPlayerSprite.y = 0;
+                    if(rectPlayerSprite.x <=448){
+                        rectPlayerSprite.x += 112;
                     }
-                    if(rectPlayerSprite.x>56){
+                    if(rectPlayerSprite.x>448){
                         rectPlayerSprite.x = 0; 
                     }
                     if(framedelay > frameTime){
@@ -635,14 +699,13 @@ int main(int argc, char* args[]){
                     for(i=0;i<nEnemies;i++){
                         rectEnemies[i].x += speedPlayer;
                     }
-                    //rectPlayer.x -=speedPlayer;
                     rectPlayerPosMap.x -=speedPlayer;
                     rectBackground.x -=speedPlayer;
-                    rectPlayerSprite.y = 108;
-                    if(rectPlayerSprite.x <=56){
-                        rectPlayerSprite.x += 28;
+                    rectPlayerSprite.y = 112;
+                    if(rectPlayerSprite.x <=560){
+                        rectPlayerSprite.x += 112;
                     }
-                    if(rectPlayerSprite.x>56){
+                    if(rectPlayerSprite.x>560){
                         rectPlayerSprite.x = 0; 
                     }
                     if(framedelay > frameTime){
@@ -653,14 +716,13 @@ int main(int argc, char* args[]){
                     for(i=0;i<nEnemies;i++){
                         rectEnemies[i].x -= speedPlayer;
                     }
-                    //rectPlayer.x +=speedPlayer;
                     rectPlayerPosMap.x +=speedPlayer;
                     rectBackground.x +=speedPlayer;
-                    rectPlayerSprite.y = 36;
-                    if(rectPlayerSprite.x <=56){
-                        rectPlayerSprite.x += 28;
+                    rectPlayerSprite.y = 224;
+                    if(rectPlayerSprite.x <=560){
+                        rectPlayerSprite.x += 112;
                     }
-                    if(rectPlayerSprite.x>56){
+                    if(rectPlayerSprite.x>560){
                         rectPlayerSprite.x = 0; 
                     }
                     if(framedelay > frameTime){
@@ -668,12 +730,14 @@ int main(int argc, char* args[]){
                     }
                 }
                 //fim locomocao
-
+                
+                
 
 
                 //inicio enemy move, 50% andar 50% parado
                 for(i=0;i<nEnemies;i++){
-                    enemyMove = rand() % 32+1;
+                    //enemyMove = rand() % 32+1;
+                    if(i<4){
                         if(enemyMove==1 && enemyColision[i][2]==false){
                             //direita
                             rectEnemies[i].x +=speedPlayer;
@@ -732,7 +796,23 @@ int main(int argc, char* args[]){
                                 SDL_Delay((framedelay) - frameTimeSprite);
                             }
                         }
-                    
+                    }
+                    if(i==4){
+                            enemyMoveMinotaur = rand() % 32+1;
+                            if(enemyMove<=4 || minotaurAtack==true){
+                                if(rectspriteEnemies[4].x<=432){
+                                    rectspriteEnemies[4].x += 47;
+                                    minotaurAtack=true;
+                                }
+                                if(rectspriteEnemies[4].x>432){
+                                    rectspriteEnemies[4].x=0;
+                                    minotaurAtack=false;
+                                }
+                                if(framedelay > frameTime){
+                                    SDL_Delay((15) - frameTimeSprite);
+                                }
+                            }
+                    }
                 }
                 //--------------------------------------
 
