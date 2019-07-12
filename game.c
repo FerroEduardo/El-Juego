@@ -9,7 +9,7 @@
 
 
 //VERSÃO
-#define version "v0.1.2" 
+#define version "v0.1.3" 
 /*
     gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -Wall 
 -Wno-switch remove todos os warns relacionados ao Wswitch(n tem mais esse erro)
@@ -22,23 +22,21 @@ https://www.youtube.com/watch?v=yFLa3ln16w0
 
 //tamanho da janela
 //largura 640
-int SCREEN_WIDTH = 1280;
-int width = 1280;
+double SCREEN_WIDTH = 1280;
 //altura 480
-int SCREEN_HEIGHT = 720;
-int height = 720;
+float SCREEN_HEIGHT = 720;
 //escala 16:9
 double ESCALA = 16.f/9.f;
 
-const int LEVEL_WIDTH = 1280;
-const int LEVEL_HEIGHT = 720;
+int LEVEL_WIDTH = 1280;
+int LEVEL_HEIGHT = 720;
 
 int i,j,k;
 
 //speed in pixels/second
 #define SPEED 300
 
-#define speedPlayer 10
+double speedPlayer = 10;
 #define FPS 23
 #define framedelay 30
 #define cutdelay 150
@@ -87,7 +85,7 @@ So a surface is in regular memory, and a texture is in this separate VRAM.
 int main(int argc, char* args[]){
     int statusGame=0;
     int sobe=false, desce=false, esquerda=false,direita=false,atacar=0,lastside,statusRank=0,statusCreditos=0;
-    int enemyMove,minotaurAtack=false;
+    int enemyMove=-1,enemyMoveMinotaur=-1,minotaurAtack=false;
     SDL_Surface *surfEnemies[nEnemies];
     SDL_Texture *texEnemies[nEnemies];
     SDL_Rect rectEnemies[nEnemies];
@@ -105,7 +103,7 @@ int main(int argc, char* args[]){
     startRenderer();
     //PLAYER------------
     //carrega imagem na memoria do pc,provavelmente na RAM "mario.png"
-    SDL_Surface *surfPlayer = IMG_Load("recursos/player_link.png");
+    SDL_Surface *surfPlayer = IMG_Load("recursos/player_new.png");
     if(surfPlayer==NULL){
         printf("Deu merda ao criar surfPlayer! SDL_Error: %s\n", SDL_GetError());
         SDL_DestroyRenderer(render);
@@ -125,13 +123,13 @@ int main(int argc, char* args[]){
     SDL_Rect rectPlayer;
     //rectPlayer.x = (SCREEN_WIDTH/2)   + (rectPlayer.w/2);
     //rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
-    rectPlayer.w = 90;
-    rectPlayer.h = 120;
+    rectPlayer.w = 110;
+    rectPlayer.h = 110;
     rectPlayer.x = (SCREEN_WIDTH/2)   - (rectPlayer.w/2);
     rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
 
     
-    SDL_Rect rectPlayerSprite = {0,75,60,45};
+    SDL_Rect rectPlayerSprite = {0,0,112,112};
     
     // h/height altura
     // w/width largura
@@ -139,10 +137,10 @@ int main(int argc, char* args[]){
     //---------------------
     
     //BACKGROUND-----------
-    SDL_Surface *surfBACKGROUND = IMG_Load("recursos/teste_mapa.png");
+    SDL_Surface *surfBACKGROUND = IMG_Load("recursos/01_el_mapa.png");
     SDL_Texture *texBACKGROUND = SDL_CreateTextureFromSurface(render, surfBACKGROUND);
     SDL_Rect rectBackground = {(SCREEN_WIDTH/2)   + (rectPlayer.w/2),(SCREEN_HEIGHT /2) - (rectPlayer.h/2),SCREEN_WIDTH,SCREEN_HEIGHT};
-
+    
     //RANK-----------
     SDL_Surface *surfRANK = IMG_Load("recursos/RANKS.png");
     SDL_Texture *texRANK = SDL_CreateTextureFromSurface(render, surfRANK);
@@ -599,13 +597,13 @@ int main(int argc, char* args[]){
                 if(atacar==true){
                     //sobe
                     if(lastside==0){
-                        rectPlayerSprite.y = 362;
-                        if(rectPlayerSprite.x <275){
-                            rectPlayerSprite.x += 56;
+                        rectPlayerSprite.y = 784;
+                        if(rectPlayerSprite.x <=224){
+                            rectPlayerSprite.x += 112;
                         }
-                        else if(rectPlayerSprite.x>=275){
+                        if(rectPlayerSprite.x>224){
                             rectPlayerSprite.x = 0;
-                            rectPlayerSprite.y = 180;
+                            rectPlayerSprite.y = 336;
                             atacar=0;
                         }
                         if(framedelay > frameTimeSpriteAtack){
@@ -614,13 +612,13 @@ int main(int argc, char* args[]){
                     }
                     //desce
                     else if(lastside==1){
-                        rectPlayerSprite.y = 240;
-                        if(rectPlayerSprite.x <275){
-                            rectPlayerSprite.x += 56;
+                        rectPlayerSprite.y = 448;
+                        if(rectPlayerSprite.x <=224){
+                            rectPlayerSprite.x += 112;
                         }
-                        else if(rectPlayerSprite.x>=275){
+                        if(rectPlayerSprite.x>224){
                             rectPlayerSprite.x = 0;
-                            rectPlayerSprite.y = 75;
+                            rectPlayerSprite.y = 0;
                             atacar=0;
                         }
                         if(framedelay > frameTimeSpriteAtack){
@@ -628,14 +626,14 @@ int main(int argc, char* args[]){
                         }
                     }
                     //esquerda
-                    else if(lastside==3 ){
-                        rectPlayerSprite.y = 417;
-                        if(rectPlayerSprite.x <275){
-                            rectPlayerSprite.x += 56;
+                    else if(lastside==3){
+                        rectPlayerSprite.y = 672;
+                        if(rectPlayerSprite.x <=224){
+                            rectPlayerSprite.x += 112;
                         }
-                        else if(rectPlayerSprite.x>=275){
+                        if(rectPlayerSprite.x>224){
                             rectPlayerSprite.x = 0;
-                            rectPlayerSprite.y = 15;
+                            rectPlayerSprite.y = 112;
                             atacar=0;
                         }
                         if(framedelay > frameTimeSpriteAtack){
@@ -644,13 +642,13 @@ int main(int argc, char* args[]){
                     }
                     //direita
                     else if(lastside==2){
-                        rectPlayerSprite.y = 300;
-                        if(rectPlayerSprite.x <275){
-                            rectPlayerSprite.x += 56;
+                        rectPlayerSprite.y = 560;
+                        if(rectPlayerSprite.x<=224){
+                            rectPlayerSprite.x += 112;
                         }
-                        else if(rectPlayerSprite.x>=275){
+                        if(rectPlayerSprite.x>224){
                             rectPlayerSprite.x = 0;
-                            rectPlayerSprite.y = 120;
+                            rectPlayerSprite.y = 224;
                             atacar=0;
                         }
                         if(framedelay > frameTimeSpriteAtack){
@@ -669,11 +667,11 @@ int main(int argc, char* args[]){
                     }
                     rectPlayerPosMap.y -=speedPlayer;
                     rectBackground.y -=speedPlayer;
-                    rectPlayerSprite.y = 180;
-                    if(rectPlayerSprite.x <=276){
-                        rectPlayerSprite.x += 56;
+                    rectPlayerSprite.y = 336;
+                    if(rectPlayerSprite.x <=448){
+                        rectPlayerSprite.x += 112;
                     }
-                    if(rectPlayerSprite.x>276){
+                    if(rectPlayerSprite.x>448){
                         rectPlayerSprite.x = 0; 
                     }
                     if(framedelay > frameTime){
@@ -686,11 +684,11 @@ int main(int argc, char* args[]){
                     }
                     rectPlayerPosMap.y +=speedPlayer;
                     rectBackground.y +=speedPlayer;
-                    rectPlayerSprite.y = 75;
-                    if(rectPlayerSprite.x <=276){
-                        rectPlayerSprite.x += 56;
+                    rectPlayerSprite.y = 0;
+                    if(rectPlayerSprite.x <=448){
+                        rectPlayerSprite.x += 112;
                     }
-                    if(rectPlayerSprite.x>276){
+                    if(rectPlayerSprite.x>448){
                         rectPlayerSprite.x = 0; 
                     }
                     if(framedelay > frameTime){
@@ -703,11 +701,11 @@ int main(int argc, char* args[]){
                     }
                     rectPlayerPosMap.x -=speedPlayer;
                     rectBackground.x -=speedPlayer;
-                    rectPlayerSprite.y = 15;
-                    if(rectPlayerSprite.x <=276){
-                        rectPlayerSprite.x += 56;
+                    rectPlayerSprite.y = 112;
+                    if(rectPlayerSprite.x <=560){
+                        rectPlayerSprite.x += 112;
                     }
-                    if(rectPlayerSprite.x>276){
+                    if(rectPlayerSprite.x>560){
                         rectPlayerSprite.x = 0; 
                     }
                     if(framedelay > frameTime){
@@ -720,11 +718,11 @@ int main(int argc, char* args[]){
                     }
                     rectPlayerPosMap.x +=speedPlayer;
                     rectBackground.x +=speedPlayer;
-                    rectPlayerSprite.y = 120;
-                    if(rectPlayerSprite.x <=276){
-                        rectPlayerSprite.x += 56;
+                    rectPlayerSprite.y = 224;
+                    if(rectPlayerSprite.x <=560){
+                        rectPlayerSprite.x += 112;
                     }
-                    if(rectPlayerSprite.x>276){
+                    if(rectPlayerSprite.x>560){
                         rectPlayerSprite.x = 0; 
                     }
                     if(framedelay > frameTime){
@@ -738,7 +736,7 @@ int main(int argc, char* args[]){
 
                 //inicio enemy move, 50% andar 50% parado
                 for(i=0;i<nEnemies;i++){
-                    enemyMove = rand() % 32+1;
+                    //enemyMove = rand() % 32+1;
                     if(i<4){
                         if(enemyMove==1 && enemyColision[i][2]==false){
                             //direita
@@ -800,7 +798,7 @@ int main(int argc, char* args[]){
                         }
                     }
                     if(i==4){
-                            enemyMove = rand() % 32+1;
+                            enemyMoveMinotaur = rand() % 32+1;
                             if(enemyMove<=4 || minotaurAtack==true){
                                 if(rectspriteEnemies[4].x<=432){
                                     rectspriteEnemies[4].x += 47;
