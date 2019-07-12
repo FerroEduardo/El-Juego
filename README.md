@@ -1,6 +1,8 @@
 # El-Juego
 Descrição: El Juego
 
+chmod -x game
+
 "gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -Wall && ./game"
 
 
