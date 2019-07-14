@@ -32,6 +32,7 @@ double ESCALA = 16.f/9.f;
 int LEVEL_WIDTH = 1280;
 int LEVEL_HEIGHT = 720;
 int imunidadePlayer = 0;
+int delayFruta = 0;
 
 int i,j,k;
 int pontuacaoPlayer=0;
@@ -55,7 +56,9 @@ double speedPlayer = 10;
 #define nBalao1 0
 #define nBalao2 1
 #define nFruits 3
-#define nWalls 35
+#define nWalls 68
+#define nHearts 12
+//cada meio coracao
 
 //variaveis globais
 SDL_Window *window = NULL;
@@ -69,11 +72,6 @@ typedef struct{
     char NOME[15];
     int PONTOS;
 }pontuacao;
-
-typedef struct
-{
-    SDL_Rect PGlobal;
-}entity;
 
 
 
@@ -94,6 +92,7 @@ int *lifeCount;
 void fullLife();
 void plusOneLife();
 void consumirFruta();
+void receiveDamage();
 
 /*
 SDL surface is merely a struct that represents image data in memory.
@@ -102,7 +101,6 @@ So a surface is in regular memory, and a texture is in this separate VRAM.
 */
 
 int main(int argc, char* args[]){
-    entity Player;
     FILE *Ranks = fopen("Pontuacao/ranks","a+");
     FILE *RankOrdenado = fopen("Pontuacao/ranks_ordenado","a+");
     int statusGame=0,mageStatus=0;
@@ -131,27 +129,24 @@ int main(int argc, char* args[]){
     
     TTF_Font *font = TTF_OpenFont("recursos/pixelmix.ttf",16);
     //LIFE--------------
-    int PlayerLife=9;
+    int PlayerLife=nHearts;
     lifeCount=&PlayerLife;
-    SDL_Surface *surfHeart = IMG_Load("recursos/heart.png");
+    SDL_Surface *surfHeart = IMG_Load("recursos/coracao.png");
     SDL_Texture *texHeart = SDL_CreateTextureFromSurface(render, surfHeart);
-    SDL_Rect rectHeart = {0,0,50,50};
-    SDL_Surface *surfHeartCounter = IMG_Load("recursos/LIFECOUNTER_W.png");;
-    SDL_Texture *texHeartCounter = SDL_CreateTextureFromSurface(render, surfHeartCounter);
-    SDL_Rect rectHeartCounter = {50,25,21,28};
-    SDL_Rect rectHeartCounterSprite = {1116,0,63,85};
-    rectFullLife=&rectHeartCounterSprite;
+    SDL_Rect rectHeart = {5,0,200,30};
+    SDL_Rect rectHeartSprite = {1292,0,108,17};
+    rectFullLife=&rectHeartSprite;
     //------------------
+
     //Inventario Frutas
-    SDL_Surface *surfInvFruta = IMG_Load("recursos/frutas/frutas_11.png");
+    SDL_Surface *surfInvFruta = IMG_Load("recursos/barradefruta.png");
     SDL_Texture *texInvFruta = SDL_CreateTextureFromSurface(render, surfInvFruta);
-    SDL_Rect rectInvFruta = {0,50,50,50};
-    SDL_Surface *surInvFrutaSprite = IMG_Load("recursos/LIFECOUNTER_W.png");
-    SDL_Texture *texInvFrutaSprite = SDL_CreateTextureFromSurface(render, surInvFrutaSprite);
-    SDL_Rect rectInvFrutaCounter = {50,55,21,28};
-    SDL_Rect rectInvFrutaCounterSprite = {0,0,63,85};
-    rectplusOneLife=&rectInvFrutaCounterSprite;
-    /*
+    SDL_Rect rectInvFruta = {5,35,200,50};
+    SDL_Rect rectInvFrutaSprite = {0,0,72,24};
+    rectplusOneLife=&rectInvFrutaSprite;
+
+
+    /*era pra usar a biblioteca do texto
     char PlayerLifeString = '9',buffer;
     PlayerLifeString=sprintf(buffer,'%d',PlayerLife);
     //itoa(PlayerLife,PlayerLifeString,10);
@@ -258,19 +253,19 @@ int main(int argc, char* args[]){
     //FRUITS-------------------
     surfFRUTAS[0] = IMG_Load("recursos/frutas/frutas_01.png");
     texFRUTAS[0] = SDL_CreateTextureFromSurface(render, surfFRUTAS[0]);
-    rectFRUTAS[0].x = 600; rectFRUTAS[0].y = 100; rectFRUTAS[0].w = 15; rectFRUTAS[0].h = 15;
+    rectFRUTAS[0].x = 600; rectFRUTAS[0].y = 100; rectFRUTAS[0].w = 30; rectFRUTAS[0].h = 30;
 
     surfFRUTAS[1] = IMG_Load("recursos/frutas/frutas_02.png");
     texFRUTAS[1] = SDL_CreateTextureFromSurface(render, surfFRUTAS[1]);
-    rectFRUTAS[1].x = 660; rectFRUTAS[1].y = 100; rectFRUTAS[1].w = 15; rectFRUTAS[1].h = 15;
+    rectFRUTAS[1].x = 660; rectFRUTAS[1].y = 100; rectFRUTAS[1].w = 30; rectFRUTAS[1].h = 30;
 
     surfFRUTAS[2] = IMG_Load("recursos/frutas/frutas_03.png");
     texFRUTAS[2] = SDL_CreateTextureFromSurface(render, surfFRUTAS[2]);
-    rectFRUTAS[2].x = 720; rectFRUTAS[2].y = 100; rectFRUTAS[2].w = 15; rectFRUTAS[2].h = 15;
+    rectFRUTAS[2].x = 720; rectFRUTAS[2].y = 100; rectFRUTAS[2].w = 30; rectFRUTAS[2].h = 30;
 
 
     //LOADING-----------------
-    SDL_Surface *surfloading = IMG_Load("recursos/sprite_loading.png");
+    SDL_Surface *surfloading = IMG_Load("recursos/loadingscreen.png");
     SDL_Texture *texloading = SDL_CreateTextureFromSurface(render, surfloading);
     SDL_Rect rectloading = {0,0,SCREEN_WIDTH,SCREEN_HEIGHT};
     SDL_Rect rectloadingrecorte = {0,0,960,540};
@@ -282,20 +277,26 @@ int main(int argc, char* args[]){
     SDL_Rect rectEA_PLANsprite = {0,0,SCREEN_WIDTH,SCREEN_HEIGHT};
 
 
+    //TUTORIAL-----------------
+    SDL_Surface *surTutorial = IMG_Load("recursos/tutorial.png");
+    SDL_Texture *texTutorial = SDL_CreateTextureFromSurface(render, surTutorial);
+    
+    //-------------------------------
+
     //SDL_Rect rectloading = {0,0,SCREEN_WIDTH,SCREEN_HEIGHT};
     //---------------------
     //ENEMY1----------
     
     surfEnemies[0] = IMG_Load("recursos/green_enemy.png");
     texEnemies[0] = SDL_CreateTextureFromSurface(render, surfEnemies[0]);
-    rectEnemies[0].x = 900; rectEnemies[0].y = 160; rectEnemies[0].w = 180; rectEnemies[0].h = 141;
+    rectEnemies[0].x = 3148-rectBackground.x; rectEnemies[0].y = 644-rectBackground.y; rectEnemies[0].w = 180; rectEnemies[0].h = 141;
     rectspriteEnemies[0].x = 0;rectspriteEnemies[0].y = 94; rectspriteEnemies[0].w = 60; rectspriteEnemies[0].h = 47;
     
     //-----------------
     //enemy2-----------
     surfEnemies[1] = IMG_Load("recursos/red_enemy.png");
     texEnemies[1] = SDL_CreateTextureFromSurface(render, surfEnemies[1]);
-    rectEnemies[1].x = 300; rectEnemies[1].y = 350; rectEnemies[1].w = 180; rectEnemies[1].h = 141;
+    rectEnemies[1].x = 583-rectBackground.x; rectEnemies[1].y = 1248-rectBackground.y; rectEnemies[1].w = 180; rectEnemies[1].h = 141;
     rectspriteEnemies[1].x = 0;rectspriteEnemies[1].y = 94; rectspriteEnemies[1].w = 60; rectspriteEnemies[1].h = 47;
 
     
@@ -304,22 +305,28 @@ int main(int argc, char* args[]){
     
     surfEnemies[2] = IMG_Load("recursos/purple_enemy.png");
     texEnemies[2] = SDL_CreateTextureFromSurface(render, surfEnemies[2]);
-    rectEnemies[2].x = 500; rectEnemies[2].y = 1200; rectEnemies[2].w = 180; rectEnemies[2].h = 141;
+    rectEnemies[2].x = 5259-rectBackground.x; rectEnemies[2].y = 1257-rectBackground.y; rectEnemies[2].w = 180; rectEnemies[2].h = 141;
     rectspriteEnemies[2].x = 0;rectspriteEnemies[2].y = 94; rectspriteEnemies[2].w = 60; rectspriteEnemies[2].h = 47;
 
 
     //enemy4-----------
     surfEnemies[3] = IMG_Load("recursos/top_enemy.png");
     texEnemies[3] = SDL_CreateTextureFromSurface(render, surfEnemies[3]);
-    rectEnemies[3].x = 250; rectEnemies[3].y = 900; rectEnemies[3].w = 180; rectEnemies[3].h = 141;
+    rectEnemies[3].x = 4953-rectBackground.x; rectEnemies[3].y = 1251-rectBackground.y; rectEnemies[3].w = 180; rectEnemies[3].h = 141;
     rectspriteEnemies[3].x = 0;rectspriteEnemies[3].y = 94; rectspriteEnemies[3].w = 60; rectspriteEnemies[3].h = 47; 
     //-----------------
 
     //enemy5-----------
+    /*
     surfEnemies[4] = IMG_Load("recursos/minotauro.png");
     texEnemies[4] = SDL_CreateTextureFromSurface(render, surfEnemies[4]);
-    rectEnemies[4].x = 1500; rectEnemies[4].y = 570; rectEnemies[4].w = 400; rectEnemies[4].h = 370;
+    rectEnemies[4].x = 894-rectBackground.x; rectEnemies[4].y = 1782-rectBackground.y; rectEnemies[4].w = 400; rectEnemies[4].h = 370;
     rectspriteEnemies[4].x = 8;rectspriteEnemies[4].y = 154; rectspriteEnemies[4].w = 40; rectspriteEnemies[4].h = 37;
+    */
+    surfEnemies[4] = IMG_Load("recursos/minotauro_invertido.png");
+    texEnemies[4] = SDL_CreateTextureFromSurface(render, surfEnemies[4]);
+    rectEnemies[4].x = 894-rectBackground.x; rectEnemies[4].y = 1782-rectBackground.y; rectEnemies[4].w = 400; rectEnemies[4].h = 370;
+    rectspriteEnemies[4].x = 8;rectspriteEnemies[4].y = 155; rectspriteEnemies[4].w = 40; rectspriteEnemies[4].h = 37;
     //50++
     //-----------------
 
@@ -384,6 +391,41 @@ int main(int argc, char* args[]){
     rectWALL[33].x = 0-rectBackground.x; rectWALL[33].y = 4134-rectBackground.y; rectWALL[33].w = 7684; rectWALL[33].h = 197;
     rectWALL[34].x = 0-rectBackground.x; rectWALL[34].y = 0-rectBackground.y; rectWALL[34].w = 288; rectWALL[34].h = 4331;
     //--------------
+    rectWALL[35].x = 241-rectBackground.x; rectWALL[35].y = 808-rectBackground.y; rectWALL[35].w = 1266; rectWALL[35].h = 326;
+    rectWALL[36].x = 241-rectBackground.x; rectWALL[36].y = 326-40-rectBackground.y; rectWALL[36].w = 1266; rectWALL[36].h = 440;
+    rectWALL[37].x = 1664-rectBackground.x; rectWALL[37].y = 645+40-rectBackground.y; rectWALL[37].w = 171; rectWALL[37].h = 223;
+    rectWALL[38].x = 893-rectBackground.x; rectWALL[38].y = 708-rectBackground.y; rectWALL[38].w = 413; rectWALL[38].h = 163;
+    rectWALL[39].x = 0-rectBackground.x; rectWALL[39].y = 1089-rectBackground.y; rectWALL[39].w = 1726; rectWALL[39].h = 311;
+    rectWALL[40].x = 0-rectBackground.x; rectWALL[40].y = 1089-rectBackground.y; rectWALL[40].w = 467; rectWALL[40].h = 1729;
+    rectWALL[41].x = 0-rectBackground.x; rectWALL[41].y = 1089-rectBackground.y; rectWALL[41].w = 467; rectWALL[41].h = 1729;
+    rectWALL[42].x = 0-rectBackground.x; rectWALL[42].y = 2337-rectBackground.y; rectWALL[42].w = 982; rectWALL[42].h = 237;
+    rectWALL[43].x = 0-rectBackground.x; rectWALL[43].y = 2337-rectBackground.y; rectWALL[43].w = 890; rectWALL[43].h = 343;
+    rectWALL[44].x = 0-rectBackground.x; rectWALL[44].y = 2337-rectBackground.y; rectWALL[44].w = 524; rectWALL[44].h = 491;
+    rectWALL[45].x = 0-rectBackground.x; rectWALL[45].y = 2337-rectBackground.y; rectWALL[45].w = 342; rectWALL[45].h = 679;
+    rectWALL[46].x = 542-rectBackground.x; rectWALL[46].y = 3067-rectBackground.y; rectWALL[46].w = 358; rectWALL[46].h = 553;
+    rectWALL[47].x = 638-rectBackground.x; rectWALL[47].y = 2885-rectBackground.y; rectWALL[47].w = 358; rectWALL[47].h = 893;
+    rectWALL[48].x = 0-rectBackground.x; rectWALL[48].y = 1089-rectBackground.y; rectWALL[48].w = 467; rectWALL[48].h = 1729;
+    rectWALL[49].x = 792-rectBackground.x; rectWALL[49].y = 2817-rectBackground.y; rectWALL[49].w = 492; rectWALL[49].h = 945;
+    rectWALL[50].x = 1096-rectBackground.x; rectWALL[50].y = 2817-rectBackground.y; rectWALL[50].w = 188; rectWALL[50].h = 1027;
+    rectWALL[51].x = 1251-rectBackground.x; rectWALL[51].y = 3683-rectBackground.y; rectWALL[51].w = 49; rectWALL[51].h = 193;
+    rectWALL[52].x = 1351-rectBackground.x; rectWALL[52].y = 3719-rectBackground.y; rectWALL[52].w = 635; rectWALL[52].h = 479;
+    rectWALL[53].x = 1641-rectBackground.x; rectWALL[53].y = 3531-rectBackground.y; rectWALL[53].w = 635; rectWALL[53].h = 479;
+    rectWALL[54].x = 957-rectBackground.x; rectWALL[54].y = 3051-rectBackground.y; rectWALL[54].w = 635; rectWALL[54].h = 621;
+    rectWALL[55].x = 1177-rectBackground.x; rectWALL[55].y = 3051-rectBackground.y; rectWALL[55].w = 417; rectWALL[55].h = 91;
+    rectWALL[56].x = 1073-rectBackground.x; rectWALL[56].y = 3015-rectBackground.y; rectWALL[56].w = 417; rectWALL[56].h = 91;
+    rectWALL[57].x = 1041-rectBackground.x; rectWALL[57].y = 2963-rectBackground.y; rectWALL[57].w = 417; rectWALL[57].h = 91;
+    rectWALL[58].x = 1177-rectBackground.x; rectWALL[58].y = 3051-rectBackground.y; rectWALL[58].w = 417; rectWALL[58].h = 91;
+    rectWALL[59].x = 941-rectBackground.x; rectWALL[59].y = 2899-rectBackground.y; rectWALL[59].w = 417; rectWALL[59].h = 91;
+    rectWALL[60].x = 1647-rectBackground.x; rectWALL[60].y = 1975-rectBackground.y; rectWALL[60].w = 225; rectWALL[60].h = 1503;
+    rectWALL[61].x = 1720-rectBackground.x; rectWALL[61].y = 2777-rectBackground.y; rectWALL[61].w = 452; rectWALL[61].h = 572;
+    rectWALL[62].x = 1569-rectBackground.x; rectWALL[62].y = 2475-rectBackground.y; rectWALL[62].w = 545; rectWALL[62].h = 316;
+    rectWALL[63].x = 1449-rectBackground.x; rectWALL[63].y = 2394-rectBackground.y; rectWALL[63].w = 584; rectWALL[63].h = 316;
+    rectWALL[64].x = 1317-rectBackground.x; rectWALL[64].y = 2328-rectBackground.y; rectWALL[64].w = 728; rectWALL[64].h = 316;
+    rectWALL[65].x = 1095-rectBackground.x; rectWALL[65].y = 2274-rectBackground.y; rectWALL[65].w = 884; rectWALL[65].h = 304;
+    rectWALL[66].x = 1464-rectBackground.x; rectWALL[66].y = 1965-rectBackground.y; rectWALL[66].w = 482; rectWALL[66].h = 409;
+    rectWALL[67].x = 1464-rectBackground.x; rectWALL[67].y = 1512-rectBackground.y; rectWALL[67].w = 272; rectWALL[67].h = 862;
+    rectWALL[67].x = 1383-rectBackground.x; rectWALL[67].y = 1512-rectBackground.y; rectWALL[67].w = 353; rectWALL[67].h = 148;
+
 
 
 
@@ -397,8 +439,6 @@ int main(int argc, char* args[]){
 
     //---------------------------------------------------------------------------------------------------------------------
     //deixa essa desgraça aqui
-    Player.PGlobal.x  = rectPlayer.x + rectBackground.x;
-    Player.PGlobal.y = rectPlayer.y + rectBackground.y;
     SDL_Rect rectPlayerPosMap = { rectPlayer.x-rectBackground.x, rectPlayer.y-rectBackground.y, rectPlayer.w, rectPlayer.h};
     //set to 1 when window close button is pressed
     int close_requested = 0;
@@ -490,7 +530,8 @@ int main(int argc, char* args[]){
                                     Mix_FadeOutChannel(-1, 1000);
                                     printf("Inicia CUTSCENE\n");
                                     SDL_Delay(700);
-                                    statusGame=4;
+                                    //statusGame=4;
+                                    statusGame=6;
                                 }
                                     
                                 else if(rectCOIN.y==291){
@@ -601,24 +642,15 @@ int main(int argc, char* args[]){
         }
 
         else if(statusGame==2){
-                framestart = SDL_GetTicks();
-                if(rectloadingrecorte.x<=6720)
-                    rectloadingrecorte.x+=960;
-                else if(rectloadingrecorte.x>6720&&rectloadingrecorte.y==0){
-                    rectloadingrecorte.y=540;
-                    rectloadingrecorte.x=0;
-                }
                 SDL_RenderClear(render);
-                SDL_RenderCopy(render, texloading, &rectloadingrecorte, &rectloading);
+                SDL_RenderCopy(render, texloading, NULL, NULL);
                 SDL_RenderPresent(render);
-                if(1000 /*fps */ > frameTime){
-                    SDL_Delay((cutdelay2) - frameTime);
-                }
+                SDL_Delay(3000);
                 
-                if(rectloadingrecorte.x > 6720 && rectloadingrecorte.y==540){
+                
                     statusGame=3;
                     EAPLAN=time(NULL);
-                }
+                
                     
         }
 
@@ -666,7 +698,7 @@ int main(int argc, char* args[]){
                             case SDLK_e:
                                 falar_npc=true;
                                 break;
-                            case SDLK_r:
+                            case SDLK_v:
                                 consumirFruta();
                                 break;                            
                             case SDLK_END:
@@ -727,18 +759,6 @@ int main(int argc, char* args[]){
                         esquerda=false;   
                 }
 
-                
-
-
-
-
-
-
-
-
-
-
-
 
                 //fim colisao com paredes
                 //inicio dar vida
@@ -778,39 +798,22 @@ int main(int argc, char* args[]){
                         rectPlayerAttack.y+=speedPlayer*2;
                         rectBackground.y-=speedPlayer*2;
                         */
-                        if(imunidadePlayer==0){
-                            PlayerLife--;
-                            imunidadePlayer=valueImunidadeHit;
-                            if(rectHeartCounterSprite.x>0)
-                                rectHeartCounterSprite.x-=124;
-                        }
+                        receiveDamage();
                     }
                     if(colisao(rectPlayer, rectEnemies[i])==1){
                         desce=false;
-                        if(imunidadePlayer==0){
-                            PlayerLife--;
-                            imunidadePlayer=valueImunidadeHit;
-                            if(rectHeartCounterSprite.x>0)
-                                rectHeartCounterSprite.x-=124;
-                        }
+                        receiveDamage();
+                        
                     }
                     if(colisao(rectPlayer, rectEnemies[i])==2){
                         direita=false;
-                        if(imunidadePlayer==0){
-                            PlayerLife--;
-                            imunidadePlayer=valueImunidadeHit;
-                            if(rectHeartCounterSprite.x>0)
-                                rectHeartCounterSprite.x-=124;
-                        }
+                        receiveDamage();
+                        
                     }
                     if(colisao(rectPlayer, rectEnemies[i])==3){
                         esquerda=false;
-                        if(imunidadePlayer==0){
-                            PlayerLife--;
-                            imunidadePlayer=valueImunidadeHit;
-                            if(rectHeartCounterSprite.x>0)
-                                rectHeartCounterSprite.x-=124;
-                        }
+                        receiveDamage();
+                        
                         
                     }
                     if((colisao(rectPlayer,rectMAGE_START_Game)!=-1)){
@@ -867,9 +870,12 @@ int main(int argc, char* args[]){
                 }
                 //-------------------------
 
-                if(imunidadePlayer>0){
+                if(imunidadePlayer>0)
                     imunidadePlayer--;
-                }
+                
+                if(delayFruta>0)
+                    delayFruta--;
+
                 //colisao inimigos com eles mesmos
                 for(i=0;i<nEnemies;i++)
                     for(j=0;j<nEnemies;j++)
@@ -1171,6 +1177,7 @@ int main(int argc, char* args[]){
                     }
                     if(i==4){
                             enemyMoveMinotaur = rand() % 32+1;
+                            /*
                             if(enemyMove<=4 || minotaurAtack==true){
                                 if(rectspriteEnemies[4].x<=432){
                                     rectspriteEnemies[4].x += 47;
@@ -1178,6 +1185,16 @@ int main(int argc, char* args[]){
                                 }
                                 if(rectspriteEnemies[4].x>432){
                                     rectspriteEnemies[4].x=0;
+                                    minotaurAtack=false;
+                                }
+                            */
+                            if(enemyMove<=4 || minotaurAtack==true){
+                                if(rectspriteEnemies[4].x>=8){
+                                    rectspriteEnemies[4].x -= 47;
+                                    minotaurAtack=true;
+                                }
+                                if(rectspriteEnemies[4].x<8){
+                                    rectspriteEnemies[4].x=432;
                                     minotaurAtack=false;
                                 }
                                 if(framedelay > frameTime){
@@ -1189,7 +1206,7 @@ int main(int argc, char* args[]){
                 //--------------------------------------
 
                 
-                printf("x= %d , y= %d\n", rectBackground.x,rectBackground.y);
+                //printf("x= %d , y= %d\n", rectBackground.x,rectBackground.y);
 
 
 
@@ -1209,12 +1226,11 @@ int main(int argc, char* args[]){
                 }
                 if(mageStatus!=0 && mageStatus!=5)
                     SDL_RenderCopy(render, texDialog_01, &rectDialog_01Sprite, &rectDialog_01);
-                SDL_RenderCopy(render,texHeart,NULL,&rectHeart);
-                SDL_RenderCopy(render,texHeartCounter,&rectHeartCounterSprite,&rectHeartCounter);
-                SDL_RenderCopy(render, texInvFruta,NULL,&rectInvFruta);
-                SDL_RenderCopy(render, texInvFrutaSprite,&rectInvFrutaCounterSprite,&rectInvFrutaCounter);
                 for(i=0;i<nWalls;i++)
                     SDL_RenderCopy(render, texPlayerAttack, NULL, &rectWALL[i]);
+                SDL_RenderCopy(render,texHeart,&rectHeartSprite,&rectHeart);
+                SDL_RenderCopy(render, texInvFruta,&rectInvFrutaSprite,&rectInvFruta);
+                
                 SDL_RenderPresent(render);
                 if(framedelay > frameTime){
                     SDL_Delay((framedelay) - frameTime);
@@ -1261,6 +1277,42 @@ int main(int argc, char* args[]){
             if(framedelay > frameTime){
                 SDL_Delay((framedelay) - frameTime);
             }
+        }
+        else if(statusGame==6){
+                while (SDL_PollEvent(&evento)){                
+                switch (evento.type){
+                    case SDL_QUIT:
+                        close_requested = true;
+                    break;
+                    case SDL_KEYDOWN:
+                        switch (evento.key.keysym.sym){
+                            case SDLK_RETURN:
+                                statusGame=4;
+                                break;
+                            case SDLK_v:
+                                statusGame=4;
+                                break;
+                            case SDLK_e:
+                                statusGame=4;
+                                break;
+                            case SDLK_SPACE:
+                                statusGame=4;
+                                break;
+                            case SDLK_END:
+                                close_requested=true;
+                                break;
+                            
+                        }
+                    break;
+                    }
+                }
+                SDL_RenderClear(render);
+                SDL_RenderCopy(render, texTutorial, NULL, NULL);
+                SDL_RenderPresent(render);
+                //SDL_Delay(8000);
+                //statusGame=4;
+                
+                    
         }
         
     }
@@ -1321,32 +1373,64 @@ int main(int argc, char* args[]){
 //------------------------------------------------------------------------------------//
 
 void consumirFruta(){
-    if(*lifeCount<9 && frutaInvCount<=9 && frutaInvCount>0){
-        frutaInvCount-=1;
-        *lifeCount+=1;
-        rectplusOneLife->x-= 124;
-        rectFullLife->x += 124;
+    printf("antes vida = %d\n", *lifeCount);
+    if(*lifeCount<nHearts && frutaInvCount<=4 && frutaInvCount>0 && delayFruta==0){
+        if(*lifeCount%2==0){
+            frutaInvCount-=1;
+            *lifeCount+=2;
+            rectplusOneLife->x-= 72;
+            rectFullLife->x += 216;
+            delayFruta=30;
+        }
+        else if(*lifeCount%2!=0 && *lifeCount!=11){
+            frutaInvCount-=1;
+            *lifeCount+=2;
+            rectplusOneLife->x-= 72;
+            rectFullLife->x += 216;
+            delayFruta=30;
+        }
+        else if(*lifeCount==11){
+            frutaInvCount-=1;
+            *lifeCount+=1;
+            rectplusOneLife->x-= 72;
+            rectFullLife->x += 108;
+            delayFruta=30;
+        }
     }
+    printf("depois vida = %d\n", *lifeCount);
 }
 
 void plusOneLife(){
-    if(*lifeCount<9){
-        *lifeCount+=1;
-        if(rectFullLife->x<1116)
-            rectFullLife->x += 124;
+    if(*lifeCount<nHearts){
+        *lifeCount+=2;
+        if(rectFullLife->x<1292)
+            rectFullLife->x += 216;
     }
-    if(*lifeCount>=9 && frutaInvCount<9){
+    if(*lifeCount>=nHearts && frutaInvCount<4){
         frutaInvCount+=1;
-        rectplusOneLife->x +=124;
+        rectplusOneLife->x +=72;
         
     }
     
     //rectHeartCounterSprite.x 
+
+    printf("depois vida = %d\n", *lifeCount);
+}
+void receiveDamage(){
+    if(imunidadePlayer==0){
+    printf("damage antes vida = %d\n", *lifeCount);
+
+        *lifeCount-=1;
+        rectFullLife->x -= 108;
+        imunidadePlayer=valueImunidadeHit;
+
+    printf("damage depois vida = %d\n", *lifeCount);
+    }
 }
 
 void fullLife(){
-    *lifeCount=9;
-    rectFullLife->x = 1116;
+    *lifeCount=nHearts;
+    rectFullLife->x = 1292;
     //rectHeartCounterSprite.x 
 }
 
