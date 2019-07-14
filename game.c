@@ -10,7 +10,7 @@
 
 
 //VERSÃO
-#define version "v0.1.6" 
+#define version "v0.1.7" 
 /*
     gcc -o game game.c -lSDL2 -lSDL2_image -lSDL2_mixer -Wall 
 -Wno-switch remove todos os warns relacionados ao Wswitch(n tem mais esse erro)
@@ -55,6 +55,7 @@ double speedPlayer = 10;
 #define nBalao1 0
 #define nBalao2 1
 #define nFruits 3
+#define nWalls 35
 
 //variaveis globais
 SDL_Window *window = NULL;
@@ -68,6 +69,11 @@ typedef struct{
     char NOME[15];
     int PONTOS;
 }pontuacao;
+
+typedef struct
+{
+    SDL_Rect PGlobal;
+}entity;
 
 
 
@@ -96,6 +102,7 @@ So a surface is in regular memory, and a texture is in this separate VRAM.
 */
 
 int main(int argc, char* args[]){
+    entity Player;
     FILE *Ranks = fopen("Pontuacao/ranks","a+");
     FILE *RankOrdenado = fopen("Pontuacao/ranks_ordenado","a+");
     int statusGame=0,mageStatus=0;
@@ -179,12 +186,12 @@ int main(int argc, char* args[]){
     SDL_Rect rectPlayer;
     //rectPlayer.x = (SCREEN_WIDTH/2)   + (rectPlayer.w/2);
     //rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
-    rectPlayer.w = 80;
-    rectPlayer.h = 80;
+    rectPlayer.w = 60;
+    rectPlayer.h = 60;
     rectPlayer.x = (SCREEN_WIDTH/2)   - (rectPlayer.w/2);
     rectPlayer.y = (SCREEN_HEIGHT /2) - (rectPlayer.h/2);
     SDL_Rect rectPlayerSprite = {0,128,64,64};
-    SDL_Rect rectPlayerAttack = {rectPlayer.x-27,rectPlayer.y-16,140,140};
+    SDL_Rect rectPlayerAttack = {rectPlayer.x-21,rectPlayer.y-16,100,100};
 
     SDL_Surface *surfPlayerAttack = IMG_Load("recursos/rosa.png");
     SDL_Texture *texPlayerAttack = SDL_CreateTextureFromSurface(render, surfPlayerAttack);
@@ -195,7 +202,7 @@ int main(int argc, char* args[]){
     //MAGE START GAME
     SDL_Surface *surfMAGE_START_Game = IMG_Load("recursos/mago_f_start.png");
     SDL_Texture *texMAGE_START_Game = SDL_CreateTextureFromSurface(render, surfMAGE_START_Game);
-    SDL_Rect rectMAGE_START_Game = {(SCREEN_WIDTH/2)+ (rectPlayer.w/2)+50,(SCREEN_HEIGHT /2) - (rectPlayer.h/2)-50,128,172};
+    SDL_Rect rectMAGE_START_Game = {(SCREEN_WIDTH/2)+ (rectPlayer.w/2)+50,(SCREEN_HEIGHT /2) - (rectPlayer.h/2)-50,64,86};
     SDL_Rect rectMAGE_START_GameSprite = {0,0,32,43};
 
     //---------------------
@@ -216,16 +223,16 @@ int main(int argc, char* args[]){
     surfBALAO_02[0] = IMG_Load("recursos/balao_2.png");
     texBALAO_02[0] = SDL_CreateTextureFromSurface(render, surfBALAO_02[0]);
     rectBALAO_02[0].x = rectMAGE_START_Game.x + (rectMAGE_START_Game.w/3);
-    rectBALAO_02[0].y = rectMAGE_START_Game.y - 86 ;
-    rectBALAO_02[0].w = 64;
-    rectBALAO_02[0].h = 86;
+    rectBALAO_02[0].y = rectMAGE_START_Game.y - 32 ;
+    rectBALAO_02[0].w = 32;
+    rectBALAO_02[0].h = 32;
 
     //---------------------
 
     //BACKGROUND-----------
     SDL_Surface *surfBACKGROUND = IMG_Load("recursos/El_mapa.png");
     SDL_Texture *texBACKGROUND = SDL_CreateTextureFromSurface(render, surfBACKGROUND);
-    SDL_Rect rectBackground = {(SCREEN_WIDTH/2)   + (rectPlayer.w/2),(SCREEN_HEIGHT /2) - (rectPlayer.h/2),SCREEN_WIDTH,SCREEN_HEIGHT};
+    SDL_Rect rectBackground = {5772,228,SCREEN_WIDTH,SCREEN_HEIGHT};
     
     //RANK-----------
     SDL_Surface *surfRANK = IMG_Load("recursos/RANKS.png");
@@ -251,15 +258,15 @@ int main(int argc, char* args[]){
     //FRUITS-------------------
     surfFRUTAS[0] = IMG_Load("recursos/frutas/frutas_01.png");
     texFRUTAS[0] = SDL_CreateTextureFromSurface(render, surfFRUTAS[0]);
-    rectFRUTAS[0].x = 600; rectFRUTAS[0].y = 100; rectFRUTAS[0].w = 60; rectFRUTAS[0].h = 60;
+    rectFRUTAS[0].x = 600; rectFRUTAS[0].y = 100; rectFRUTAS[0].w = 15; rectFRUTAS[0].h = 15;
 
     surfFRUTAS[1] = IMG_Load("recursos/frutas/frutas_02.png");
     texFRUTAS[1] = SDL_CreateTextureFromSurface(render, surfFRUTAS[1]);
-    rectFRUTAS[1].x = 660; rectFRUTAS[1].y = 100; rectFRUTAS[1].w = 60; rectFRUTAS[1].h = 60;
+    rectFRUTAS[1].x = 660; rectFRUTAS[1].y = 100; rectFRUTAS[1].w = 15; rectFRUTAS[1].h = 15;
 
     surfFRUTAS[2] = IMG_Load("recursos/frutas/frutas_03.png");
     texFRUTAS[2] = SDL_CreateTextureFromSurface(render, surfFRUTAS[2]);
-    rectFRUTAS[2].x = 720; rectFRUTAS[2].y = 100; rectFRUTAS[2].w = 60; rectFRUTAS[2].h = 60;
+    rectFRUTAS[2].x = 720; rectFRUTAS[2].y = 100; rectFRUTAS[2].w = 15; rectFRUTAS[2].h = 15;
 
 
     //LOADING-----------------
@@ -338,7 +345,60 @@ int main(int argc, char* args[]){
     SDL_Rect rectDialog_01 = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
     SDL_Rect rectDialog_01Sprite = { 0 , 0, SCREEN_WIDTH, SCREEN_HEIGHT};
     //----------------
+    //WALLS----------------------------------------------------------------------------------------------------------------
+    SDL_Rect rectWALL[nWalls];
+    rectWALL[0].x = 6210-rectBackground.x; rectWALL[0].y = 141-rectBackground.y; rectWALL[0].w = 103; rectWALL[0].h = 810;    
+    rectWALL[1].x = 6210-rectBackground.x; rectWALL[1].y = 678-rectBackground.y; rectWALL[1].w = 447; rectWALL[1].h = 273;
+    rectWALL[2].x = 672-rectBackground.x; rectWALL[2].y = 678-rectBackground.y; rectWALL[2].w = 447; rectWALL[2].h = 273;
+    rectWALL[3].x = 7125-rectBackground.x; rectWALL[3].y = 142-rectBackground.y; rectWALL[3].w = 104; rectWALL[3].h = 810;
+    rectWALL[4].x = 6619-rectBackground.x; rectWALL[4].y = 410-rectBackground.y; rectWALL[4].w = 40; rectWALL[4].h = 163;
+    rectWALL[5].x = 6781-rectBackground.x; rectWALL[5].y = 409-rectBackground.y; rectWALL[5].w = 40; rectWALL[5].h = 163;
+    rectWALL[6].x = 6631-rectBackground.x; rectWALL[6].y = 137-rectBackground.y; rectWALL[6].w = 196; rectWALL[6].h = 372;
+    rectWALL[7].x = 6526-rectBackground.x; rectWALL[7].y = 137-rectBackground.y; rectWALL[7].w = 382; rectWALL[7].h = 311;
+    rectWALL[8].x = 6208-rectBackground.x; rectWALL[8].y = 137-rectBackground.y; rectWALL[8].w = 1022; rectWALL[8].h = 149;
+    rectWALL[9].x = 5890-rectBackground.x; rectWALL[9].y = 269-rectBackground.y; rectWALL[9].w = 396; rectWALL[9].h = 185;
+    rectWALL[10].x = 6206-20-rectBackground.x; rectWALL[10].y = 687-rectBackground.y; rectWALL[10].w = 479; rectWALL[10].h = 168;
+    rectWALL[11].x = 6752+20-rectBackground.x; rectWALL[11].y = 691-rectBackground.y; rectWALL[11].w = 479; rectWALL[11].h = 268;
+    rectWALL[12].x = 6400-rectBackground.x; rectWALL[12].y = 320-rectBackground.y; rectWALL[12].w = 32; rectWALL[12].h = 64;
+    rectWALL[13].x = 5374-rectBackground.x; rectWALL[13].y = 934-rectBackground.y; rectWALL[13].w = 171; rectWALL[13].h = 216;
+    rectWALL[14].x = 4671-rectBackground.x; rectWALL[14].y = 814-rectBackground.y; rectWALL[14].w = 171; rectWALL[14].h = 216;
+    rectWALL[15].x = 3879-rectBackground.x; rectWALL[15].y = 737-rectBackground.y; rectWALL[15].w = 781; rectWALL[15].h = 366;
+    rectWALL[16].x = 3654-rectBackground.x; rectWALL[16].y = 386-rectBackground.y; rectWALL[16].w = 781; rectWALL[16].h = 366;
+    rectWALL[17].x = 4644-rectBackground.x; rectWALL[17].y = 528-rectBackground.y; rectWALL[17].w = 96; rectWALL[17].h = 217;
+    rectWALL[18].x = 3358-rectBackground.x; rectWALL[18].y = 906-rectBackground.y; rectWALL[18].w = 171; rectWALL[18].h = 216;
+    rectWALL[19].x = 3008-rectBackground.x; rectWALL[19].y = 784-rectBackground.y; rectWALL[19].w = 171; rectWALL[19].h = 216;
+    rectWALL[20].x = 3136-rectBackground.x; rectWALL[20].y = 364-rectBackground.y; rectWALL[20].w = 171; rectWALL[20].h = 216;
+    rectWALL[21].x = 4672-rectBackground.x; rectWALL[21].y = 803-rectBackground.y; rectWALL[21].w = 171; rectWALL[21].h = 223;
+    rectWALL[22].x = 2720-rectBackground.x; rectWALL[22].y = 711-rectBackground.y; rectWALL[22].w = 171; rectWALL[22].h = 223;
+    rectWALL[23].x = 2654-rectBackground.x; rectWALL[23].y = 240-rectBackground.y; rectWALL[23].w = 171; rectWALL[23].h = 223;
+    rectWALL[24].x = 2465-rectBackground.x; rectWALL[24].y = 903-rectBackground.y; rectWALL[24].w = 171; rectWALL[24].h = 223;
+    rectWALL[25].x = 2402-rectBackground.x; rectWALL[25].y = 522-rectBackground.y; rectWALL[25].w = 171; rectWALL[25].h = 223;
+    rectWALL[26].x = 2465-rectBackground.x; rectWALL[26].y = 891-rectBackground.y; rectWALL[26].w = 171; rectWALL[26].h = 223;
+    rectWALL[27].x = 2015-rectBackground.x; rectWALL[27].y = 864-rectBackground.y; rectWALL[27].w = 171; rectWALL[27].h = 223;
+    rectWALL[28].x = 2045-rectBackground.x; rectWALL[28].y = 486-rectBackground.y; rectWALL[28].w = 171; rectWALL[28].h = 223;
+    rectWALL[29].x = 1793-rectBackground.x; rectWALL[29].y = 258-rectBackground.y; rectWALL[29].w = 171; rectWALL[29].h = 223;
+    rectWALL[30].x = 1664-rectBackground.x; rectWALL[30].y = 645-rectBackground.y; rectWALL[30].w = 171; rectWALL[30].h = 223;
+    //janela------
+    rectWALL[31].x = 0-rectBackground.x; rectWALL[31].y = 0-rectBackground.y; rectWALL[31].w = 7684; rectWALL[31].h = 144;
+    rectWALL[32].x = 7391-rectBackground.x; rectWALL[32].y = 0-rectBackground.y; rectWALL[32].w = 293; rectWALL[32].h = 4331;
+    rectWALL[33].x = 0-rectBackground.x; rectWALL[33].y = 4134-rectBackground.y; rectWALL[33].w = 7684; rectWALL[33].h = 197;
+    rectWALL[34].x = 0-rectBackground.x; rectWALL[34].y = 0-rectBackground.y; rectWALL[34].w = 288; rectWALL[34].h = 4331;
+    //--------------
+
+
+
+
+
+
+
+
+
+
+
+    //---------------------------------------------------------------------------------------------------------------------
     //deixa essa desgraça aqui
+    Player.PGlobal.x  = rectPlayer.x + rectBackground.x;
+    Player.PGlobal.y = rectPlayer.y + rectBackground.y;
     SDL_Rect rectPlayerPosMap = { rectPlayer.x-rectBackground.x, rectPlayer.y-rectBackground.y, rectPlayer.w, rectPlayer.h};
     //set to 1 when window close button is pressed
     int close_requested = 0;
@@ -639,6 +699,7 @@ int main(int argc, char* args[]){
                 
                 //fim event loop
                 //colisao com "janela"
+                /*
                 if(rectBackground.y + rectBackground.h + speedPlayer >= mapy){
                     desce=false;
                 }
@@ -651,7 +712,35 @@ int main(int argc, char* args[]){
                 if(rectBackground.x - speedPlayer <= 0){
                     esquerda=false;
                 }
+                */
                 //fim colisao com janela
+                //inicio colisao com paredes
+                
+                for(i=0;i<nWalls;i++){
+                    if(colisao(rectPlayer, rectWALL[i])==0)
+                        sobe=false;
+                    if(colisao(rectPlayer, rectWALL[i])==1)
+                        desce=false;
+                    if(colisao(rectPlayer, rectWALL[i])==2)
+                        direita=false;
+                    if(colisao(rectPlayer, rectWALL[i])==3)
+                        esquerda=false;   
+                }
+
+                
+
+
+
+
+
+
+
+
+
+
+
+
+                //fim colisao com paredes
                 //inicio dar vida
 
                 for(i=0;i<nFruits;i++){
@@ -695,7 +784,6 @@ int main(int argc, char* args[]){
                             if(rectHeartCounterSprite.x>0)
                                 rectHeartCounterSprite.x-=124;
                         }
-                        printf("aaaaaaa\n");
                     }
                     if(colisao(rectPlayer, rectEnemies[i])==1){
                         desce=false;
@@ -753,6 +841,10 @@ int main(int argc, char* args[]){
                             rectBALAO_02[0].w = 0;
                             rectBALAO_02[0].h = 0;
                             rectDialog_01Sprite.x = 8000;
+                            matarEnemy(&rectMAGE_START_Game,-1);
+                            //nao contar os 10 pontos
+                            pontuacaoPlayer-=10;
+                            
                             
                         }
                         /*
@@ -916,6 +1008,9 @@ int main(int argc, char* args[]){
                     for(i=0;i<nFruits;i++){
                         rectFRUTAS[i].y += speedPlayer;
                     }
+                    for(i=0;i<nWalls;i++){
+                        rectWALL[i].y += speedPlayer;
+                    }
                 }
                 else if(desce==true){
                     for(i=0;i<nEnemies;i++){
@@ -942,6 +1037,9 @@ int main(int argc, char* args[]){
                     }
                     for(i=0;i<nFruits;i++){
                         rectFRUTAS[i].y -= speedPlayer;
+                    }
+                    for(i=0;i<nWalls;i++){
+                        rectWALL[i].y -= speedPlayer;
                     }
                 }
                 else if(esquerda==true){
@@ -970,6 +1068,9 @@ int main(int argc, char* args[]){
                     for(i=0;i<nFruits;i++){
                         rectFRUTAS[i].x += speedPlayer;
                     }
+                    for(i=0;i<nWalls;i++){
+                        rectWALL[i].x += speedPlayer;
+                    }
                 }
                 else if(direita==true){
                     for(i=0;i<nEnemies;i++){
@@ -996,6 +1097,9 @@ int main(int argc, char* args[]){
                     }
                     for(i=0;i<nFruits;i++){
                         rectFRUTAS[i].x -= speedPlayer;
+                    }
+                    for(i=0;i<nWalls;i++){
+                        rectWALL[i].x -= speedPlayer;
                     }
                 }
                 //fim locomocao
@@ -1085,7 +1189,7 @@ int main(int argc, char* args[]){
                 //--------------------------------------
 
                 
-
+                printf("x= %d , y= %d\n", rectBackground.x,rectBackground.y);
 
 
 
@@ -1109,6 +1213,8 @@ int main(int argc, char* args[]){
                 SDL_RenderCopy(render,texHeartCounter,&rectHeartCounterSprite,&rectHeartCounter);
                 SDL_RenderCopy(render, texInvFruta,NULL,&rectInvFruta);
                 SDL_RenderCopy(render, texInvFrutaSprite,&rectInvFrutaCounterSprite,&rectInvFrutaCounter);
+                for(i=0;i<nWalls;i++)
+                    SDL_RenderCopy(render, texPlayerAttack, NULL, &rectWALL[i]);
                 SDL_RenderPresent(render);
                 if(framedelay > frameTime){
                     SDL_Delay((framedelay) - frameTime);
