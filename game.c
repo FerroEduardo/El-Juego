@@ -33,6 +33,7 @@ int LEVEL_WIDTH = 1280;
 int LEVEL_HEIGHT = 720;
 int imunidadePlayer = 0;
 int delayFruta = 0;
+int statusColisao = 1;
 
 int i,j,k;
 int pontuacaoPlayer=0;
@@ -41,6 +42,8 @@ int frutaInvCount = 0;
 //speed in pixels/second
 #define SPEED 300
 
+//double speedPlayer = 10;
+//debug
 double speedPlayer = 10;
 #define FPS 23
 #define framedelay 30
@@ -52,11 +55,11 @@ double speedPlayer = 10;
 #define mapx 7680
 #define mapy 4320
 
-#define nEnemies 5
+#define nEnemies 23
 #define nBalao1 0
 #define nBalao2 1
 #define nFruits 3
-#define nWalls 68
+#define nWalls 95
 #define nHearts 12
 //cada meio coracao
 
@@ -190,6 +193,8 @@ int main(int argc, char* args[]){
 
     SDL_Surface *surfPlayerAttack = IMG_Load("recursos/rosa.png");
     SDL_Texture *texPlayerAttack = SDL_CreateTextureFromSurface(render, surfPlayerAttack);
+    SDL_Surface *surfDEBUG = IMG_Load("recursos/azul.png");
+    SDL_Texture *texDEBUG = SDL_CreateTextureFromSurface(render, surfDEBUG);
     
     // h/height altura
     // w/width largura
@@ -406,25 +411,64 @@ int main(int argc, char* args[]){
     rectWALL[47].x = 638-rectBackground.x; rectWALL[47].y = 2885-rectBackground.y; rectWALL[47].w = 358; rectWALL[47].h = 893;
     rectWALL[48].x = 0-rectBackground.x; rectWALL[48].y = 1089-rectBackground.y; rectWALL[48].w = 467; rectWALL[48].h = 1729;
     rectWALL[49].x = 792-rectBackground.x; rectWALL[49].y = 2817-rectBackground.y; rectWALL[49].w = 492; rectWALL[49].h = 945;
-    rectWALL[50].x = 1096-rectBackground.x; rectWALL[50].y = 2817-rectBackground.y; rectWALL[50].w = 188; rectWALL[50].h = 1027;
-    rectWALL[51].x = 1251-rectBackground.x; rectWALL[51].y = 3683-rectBackground.y; rectWALL[51].w = 49; rectWALL[51].h = 193;
-    rectWALL[52].x = 1351-rectBackground.x; rectWALL[52].y = 3719-rectBackground.y; rectWALL[52].w = 635; rectWALL[52].h = 479;
-    rectWALL[53].x = 1641-rectBackground.x; rectWALL[53].y = 3531-rectBackground.y; rectWALL[53].w = 635; rectWALL[53].h = 479;
-    rectWALL[54].x = 957-rectBackground.x; rectWALL[54].y = 3051-rectBackground.y; rectWALL[54].w = 635; rectWALL[54].h = 621;
-    rectWALL[55].x = 1177-rectBackground.x; rectWALL[55].y = 3051-rectBackground.y; rectWALL[55].w = 417; rectWALL[55].h = 91;
-    rectWALL[56].x = 1073-rectBackground.x; rectWALL[56].y = 3015-rectBackground.y; rectWALL[56].w = 417; rectWALL[56].h = 91;
+    rectWALL[50].x = 1096-rectBackground.x; rectWALL[50].y = 2817-rectBackground.y; rectWALL[50].w = 188-18; rectWALL[50].h = 1027;
+    rectWALL[51].x = 1251-rectBackground.x; rectWALL[51].y = 3683-rectBackground.y; rectWALL[51].w = 49-13; rectWALL[51].h = 193;
+    rectWALL[52].x = 1351+20-rectBackground.x; rectWALL[52].y = 3719+20-rectBackground.y; rectWALL[52].w = 635; rectWALL[52].h = 479;
+    //embaixo ponte do final agua
+    rectWALL[53].x = 1641+30-rectBackground.x; rectWALL[53].y = 3531+15-rectBackground.y; rectWALL[53].w = 635; rectWALL[53].h = 479;
+    
+    rectWALL[54].x = 957-rectBackground.x; rectWALL[54].y = 3051-rectBackground.y; rectWALL[54].w = 635-25; rectWALL[54].h = 621-20;
+    
+    rectWALL[55].x = 1177-rectBackground.x; rectWALL[55].y = 3051-rectBackground.y; rectWALL[55].w = 417-37; rectWALL[55].h = 91;
+    rectWALL[56].x = 1073-rectBackground.x; rectWALL[56].y = 3015-rectBackground.y; rectWALL[56].w = 417-10; rectWALL[56].h = 91;
+    
     rectWALL[57].x = 1041-rectBackground.x; rectWALL[57].y = 2963-rectBackground.y; rectWALL[57].w = 417; rectWALL[57].h = 91;
-    rectWALL[58].x = 1177-rectBackground.x; rectWALL[58].y = 3051-rectBackground.y; rectWALL[58].w = 417; rectWALL[58].h = 91;
+    
+    rectWALL[58].x = 1177-rectBackground.x; rectWALL[58].y = 3051-rectBackground.y; rectWALL[58].w = 417-25; rectWALL[58].h = 91;
+    
     rectWALL[59].x = 941-rectBackground.x; rectWALL[59].y = 2899-rectBackground.y; rectWALL[59].w = 417; rectWALL[59].h = 91;
-    rectWALL[60].x = 1647-rectBackground.x; rectWALL[60].y = 1975-rectBackground.y; rectWALL[60].w = 225; rectWALL[60].h = 1503;
+     
+    rectWALL[60].x = 1647+15-rectBackground.x; rectWALL[60].y = 1975-rectBackground.y; rectWALL[60].w = 225; rectWALL[60].h = 1503-20;
     rectWALL[61].x = 1720-rectBackground.x; rectWALL[61].y = 2777-rectBackground.y; rectWALL[61].w = 452; rectWALL[61].h = 572;
     rectWALL[62].x = 1569-rectBackground.x; rectWALL[62].y = 2475-rectBackground.y; rectWALL[62].w = 545; rectWALL[62].h = 316;
     rectWALL[63].x = 1449-rectBackground.x; rectWALL[63].y = 2394-rectBackground.y; rectWALL[63].w = 584; rectWALL[63].h = 316;
     rectWALL[64].x = 1317-rectBackground.x; rectWALL[64].y = 2328-rectBackground.y; rectWALL[64].w = 728; rectWALL[64].h = 316;
+    
     rectWALL[65].x = 1095-rectBackground.x; rectWALL[65].y = 2274-rectBackground.y; rectWALL[65].w = 884; rectWALL[65].h = 304;
     rectWALL[66].x = 1464-rectBackground.x; rectWALL[66].y = 1965-rectBackground.y; rectWALL[66].w = 482; rectWALL[66].h = 409;
     rectWALL[67].x = 1464-rectBackground.x; rectWALL[67].y = 1512-rectBackground.y; rectWALL[67].w = 272; rectWALL[67].h = 862;
     rectWALL[67].x = 1383-rectBackground.x; rectWALL[67].y = 1512-rectBackground.y; rectWALL[67].w = 353; rectWALL[67].h = 148;
+    rectWALL[68].x = 1485-rectBackground.x; rectWALL[68].y = 1601-rectBackground.y; rectWALL[68].w = 238; rectWALL[68].h = 536;
+    rectWALL[69].x = 1540-rectBackground.x; rectWALL[69].y = 3414-rectBackground.y; rectWALL[69].w = 202; rectWALL[69].h = 40;
+    rectWALL[70].x = 2184-rectBackground.x; rectWALL[70].y = 3476-rectBackground.y; rectWALL[70].w = 586; rectWALL[70].h = 855;
+    rectWALL[71].x = 2055-rectBackground.x; rectWALL[71].y = 3523-rectBackground.y; rectWALL[71].w = 282; rectWALL[71].h = 148;
+    rectWALL[72].x = 1926-rectBackground.x; rectWALL[72].y = 3583-rectBackground.y; rectWALL[72].w = 282; rectWALL[72].h = 148;
+    rectWALL[73].x = 2614-rectBackground.x; rectWALL[73].y = 3761-rectBackground.y; rectWALL[73].w = 328; rectWALL[73].h = 570;
+    rectWALL[74].x = 2738-rectBackground.x; rectWALL[74].y = 3997-rectBackground.y; rectWALL[74].w = 328; rectWALL[74].h = 334;
+    rectWALL[75].x = 2950-rectBackground.x; rectWALL[75].y = 4087-rectBackground.y; rectWALL[75].w = 328; rectWALL[75].h = 244;
+    rectWALL[76].x = 3082-rectBackground.x; rectWALL[76].y = 3519-rectBackground.y; rectWALL[76].w = 146; rectWALL[76].h = 164;
+    rectWALL[77].x = 3302-rectBackground.x; rectWALL[77].y = 3511-rectBackground.y; rectWALL[77].w = 164; rectWALL[77].h = 164;
+    rectWALL[78].x = 3558-rectBackground.x; rectWALL[78].y = 3483-rectBackground.y; rectWALL[78].w = 146; rectWALL[78].h = 164;
+    rectWALL[79].x = 3368-rectBackground.x; rectWALL[79].y = 3707-rectBackground.y; rectWALL[79].w = 146; rectWALL[79].h = 164;
+    rectWALL[80].x = 3368-rectBackground.x; rectWALL[80].y = 3959-rectBackground.y; rectWALL[80].w = 146; rectWALL[80].h = 164;
+    rectWALL[81].x = 3080-rectBackground.x; rectWALL[81].y = 3771-rectBackground.y; rectWALL[81].w = 146; rectWALL[81].h = 164;
+    rectWALL[82].x = 3688-rectBackground.x; rectWALL[82].y = 3779-rectBackground.y; rectWALL[82].w = 146; rectWALL[82].h = 164;
+    rectWALL[83].x = 3816-rectBackground.x; rectWALL[83].y = 3995-rectBackground.y; rectWALL[83].w = 146; rectWALL[83].h = 164;
+    rectWALL[84].x = 3976-rectBackground.x; rectWALL[84].y = 3779-rectBackground.y; rectWALL[84].w = 146; rectWALL[84].h = 164;
+    rectWALL[85].x = 3912-rectBackground.x; rectWALL[85].y = 3487-rectBackground.y; rectWALL[85].w = 146; rectWALL[85].h = 164;
+    rectWALL[86].x = 4138-rectBackground.x; rectWALL[86].y = 3997-rectBackground.y; rectWALL[86].w = 146; rectWALL[86].h = 164;
+    rectWALL[87].x = 3082-rectBackground.x; rectWALL[87].y = 3519-rectBackground.y; rectWALL[87].w = 146; rectWALL[87].h = 164;
+    rectWALL[88].x = 4200-rectBackground.x; rectWALL[88].y = 3647-rectBackground.y; rectWALL[88].w = 146; rectWALL[88].h = 164;
+    rectWALL[89].x = 4390-rectBackground.x; rectWALL[89].y = 3483-rectBackground.y; rectWALL[89].w = 146; rectWALL[89].h = 164;
+    rectWALL[90].x = 4360-rectBackground.x; rectWALL[90].y = 3837-rectBackground.y; rectWALL[90].w = 146; rectWALL[90].h = 164;
+    rectWALL[91].x = 4290-rectBackground.x; rectWALL[91].y = 4071-rectBackground.y; rectWALL[91].w = 66; rectWALL[91].h = 90;
+    rectWALL[92].x = 3838-rectBackground.x; rectWALL[92].y = 3849-rectBackground.y; rectWALL[92].w = 66; rectWALL[92].h = 90;
+    rectWALL[93].x = 3231-rectBackground.x; rectWALL[93].y = 3847-rectBackground.y; rectWALL[93].w = 66; rectWALL[93].h = 90;
+    //casa do inicio
+    rectWALL[94].x = 5375-rectBackground.x; rectWALL[94].y = 832-rectBackground.y; rectWALL[94].w = 353; rectWALL[94].h = 320;
+   
+
+
 
 
 
@@ -747,7 +791,7 @@ int main(int argc, char* args[]){
                 */
                 //fim colisao com janela
                 //inicio colisao com paredes
-                
+                if(statusColisao==1)
                 for(i=0;i<nWalls;i++){
                     if(colisao(rectPlayer, rectWALL[i])==0)
                         sobe=false;
@@ -758,7 +802,7 @@ int main(int argc, char* args[]){
                     if(colisao(rectPlayer, rectWALL[i])==3)
                         esquerda=false;   
                 }
-
+                
 
                 //fim colisao com paredes
                 //inicio dar vida
@@ -1206,7 +1250,7 @@ int main(int argc, char* args[]){
                 //--------------------------------------
 
                 
-                //printf("x= %d , y= %d\n", rectBackground.x,rectBackground.y);
+                printf("x= %d , y= %d\n", rectBackground.x,rectBackground.y);
 
 
 
@@ -1228,6 +1272,7 @@ int main(int argc, char* args[]){
                     SDL_RenderCopy(render, texDialog_01, &rectDialog_01Sprite, &rectDialog_01);
                 for(i=0;i<nWalls;i++)
                     SDL_RenderCopy(render, texPlayerAttack, NULL, &rectWALL[i]);
+                SDL_RenderCopy(render,texDEBUG,NULL,&rectWALL[69]);
                 SDL_RenderCopy(render,texHeart,&rectHeartSprite,&rectHeart);
                 SDL_RenderCopy(render, texInvFruta,&rectInvFrutaSprite,&rectInvFruta);
                 
